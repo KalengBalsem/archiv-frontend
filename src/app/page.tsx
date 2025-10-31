@@ -27,16 +27,16 @@ export default function HomePage() {
   const statuses = [...new Set(mockProjects.map((p) => p.status))].sort()
   const locations = [...new Set(mockProjects.map((p) => p.location.name))].sort()
   const allSoftware = [...new Set(mockProjects.flatMap((p) => p.software.map((s) => s.name)))].sort()
-  const authors = [...new Set(mockProjects.map((p) => p.user.last_name))].sort()
+  const authors = [...new Set(mockProjects.map((p) => `${p.user.first_name} ${p.user.last_name}`))].sort()
 
   const filteredProjects = mockProjects
     .filter((project) => {
-      const matchesSearch =         
+      const matchesSearch =
         project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          project.tags.some((tag) => tag.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          project.user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          project.location.name.toLowerCase().includes(searchQuery.toLowerCase())
+        project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.tags.some((tag) => tag.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        project.user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.location.name.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesBuildingType = buildingTypeFilter === "all" || project.building_typology.name === buildingTypeFilter
       const matchesStatus = statusFilter === "all" || project.status === statusFilter
@@ -64,10 +64,10 @@ export default function HomePage() {
         case "title_za":
           return b.title.localeCompare(a.title)
         default:
-          return 0 
+          return 0
       }
     })
-  
+
   return (
     <LayoutWrapper>
       <div className="container mx-auto px-4 py-8">

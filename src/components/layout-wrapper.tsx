@@ -7,27 +7,27 @@ import Header from "./header"
 import Sidebar from "./sidebar"
 
 interface LayoutWrapperProps {
-    children: React.ReactNode
+  children: React.ReactNode
 }
 
 export default function LayoutWrapper({ children }: LayoutWrapperProps) {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
 
-    const closeSidebar = () => {
-        setSidebarOpen(false);
-    };
+  const closeSidebar = () => {
+    setSidebarOpen(false)
+  }
 
-    return (
-        <div className="min-h-screen bg-white">
-            <Header onToggleSidebar={toggleSidebar}/>
-            <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+  return (
+    <div className="min-h-screen bg-white">
+      <Header onToggleSidebar={toggleSidebar} />
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
-            {/* Main content with sidebar offset */}
-            <main className="transition-all duration-200 ease-in-out">{children}</main>
-        </div>
-    )
+      {/* Main content with sidebar offset */}
+      <main className="transition-all duration-200 ease-in-out">{children}</main>
+    </div>
+  )
 }

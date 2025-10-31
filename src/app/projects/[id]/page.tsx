@@ -228,17 +228,17 @@ const projectData = {
     ],
   },
 }
-
+import React from 'react'; 
 interface ProjectDetailPageProps {
   params: {
-    id: string
-  }
+    id: string; // 'id' is a string, not a Promise of a string or an object
+  };
 }
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const project = projectData[params.id as keyof typeof projectData]
+  const project = projectData[params.id as keyof typeof projectData];
 
-  const [selectedAttachment, setSelectedAttachment] = useState<null | typeof project.attachments[0]>(null)
+  const [selectedAttachment, setSelectedAttachment] = React.useState<null | typeof project.attachments[0]>(null);
 
   if (!project) {
     return (
