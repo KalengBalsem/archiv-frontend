@@ -80,7 +80,41 @@ export default function HomePage() {
 
   return (
     <LayoutWrapper>
-      <p>ARCH-IV home page</p>
+      <div className="container mx-auto px-4 py-8">
+        {/* 🔎 Search + Filters */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-center max-w-4xl mx-auto mb-8">
+          <div className="relative flex-1 max-w-2xl">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 text-lg border-gray-300 focus:border-black focus:ring-black"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-12 px-6 border-gray-300 hover:border-black hover:bg-gray-50"
+          >
+            <Filter className="h-5 w-5 mr-2" />
+            Filters
+          </Button>
+        </div>
+
+        {/* 📦 Project Grid */}
+        {loading ? (
+          <p className="text-center text-gray-500">Loading projects...</p>
+        ) : filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500">No projects found.</div>
+        )}
+      </div>
     </LayoutWrapper>
   )
 }
