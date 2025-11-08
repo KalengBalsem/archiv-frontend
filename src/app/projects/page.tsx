@@ -8,7 +8,7 @@ import LayoutWrapper from "@/components/layout-wrapper"
 import { Search, Filter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { mockProjects } from "@/lib/mockProjects" // 👈 add this
+import { mockProjects } from "@/lib/mockProjects"
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -34,6 +34,7 @@ export default function HomePage() {
             slug,
             description,
             thumbnail_url,
+            gltf_url,
             status,
             views,
             created_at,

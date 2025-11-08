@@ -31,18 +31,19 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200">
           {/* Thumbnail */}
           <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
-            <Image
-              src={project.thumbnail_url || "/placeholder.svg"}
-              alt={project.title}
-              width={400}
-              height={300}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            />
-            {/* Small 3D preview if a glTF/GLB URL is available */}
-            {project.gltf_url && (
-              <div className="absolute left-3 bottom-3 w-28 h-20 rounded-md overflow-hidden shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
-                <ModelPreview src={project.gltf_url} poster={project.thumbnail_url} />
+            {project.gltf_url ? (
+              // Use the preview (poster + hover-to-init viewer) as the main thumbnail when a model exists
+              <div className="w-full h-full group-hover:scale-105 transition-transform duration-200">
+                <ModelPreview src={project.gltf_url} poster={project.thumbnail_url} className="w-full h-full" />
               </div>
+            ) : (
+              <Image
+                src={project.thumbnail_url || "/placeholder.svg"}
+                alt={project.title}
+                width={400}
+                height={300}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              />
             )}
             {/* Status Badge */}
             {project.status && (

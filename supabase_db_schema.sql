@@ -44,6 +44,7 @@ create table public.projects (
   slug text unique not null,
   description text,
   thumbnail_url text,
+  gltf_url text,
   license_id uuid references public.licenses(id) on delete set null,
   building_typology_id uuid references public.building_typologies(id) on delete set null,
   status text default 'published' check (status in ('draft', 'published', 'private')),
