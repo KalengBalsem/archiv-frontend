@@ -1,9 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "@/styles/globals.css"
+import { Roboto_Mono } from 'next/font/google'
 
-const inter = Inter({ subsets: ["latin"] })
+const robotoMono = Roboto_Mono({
+  subsets: ['latin'],
+  weight: ['300','400','500','700'],
+  variable: '--font-roboto-mono',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: "Archive 3D - Architectural Model Archive",
@@ -16,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={robotoMono.variable}>
+      <body className="font-sans">{children}</body>
     </html>
   )
 }

@@ -5,7 +5,8 @@
 /* === Base Layer: Theme Variables & Global Styles === */
 @layer base {
   :root {
-    --font-family-sans: ui-sans-serif, system-ui, sans-serif;
+    /* Prefer the Roboto Mono variable exposed by next/font; fall back to system sans/monospace */
+    --font-family-sans: var(--font-roboto-mono, ui-sans-serif, system-ui, monospace);
 
     /* Light theme (shadcn-compatible) */
     --background: 0 0% 100%;
