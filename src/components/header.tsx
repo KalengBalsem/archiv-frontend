@@ -1,34 +1,25 @@
 "use client"
 
-import Link from "next/link";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+import SearchInput from './search-input';
+import { UserNav } from '@/components/layout/user-nav';
 
-interface HeaderProps {
-  onToggleSidebar: () => void
-}
-
-export default function Header({ onToggleSidebar }: HeaderProps) {
+export default function Header() {
   return (
-    <header className="border-b border-gray-200 bg-white relative z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleSidebar}
-              className="p-2 hover:bg-gray-100"
-              aria-label="Toggle navigation menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <Link href="/" className="text-2xl font-bold text-black tracking-tight">
-              ARCH-IV
-            </Link>
-          </div>
+    <header className='flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'>
+      
+      <div className='flex items-center gap-2 px-4'>
+        <SidebarTrigger className='-ml-1' />
+        <Separator orientation='vertical' className='mr-2 h-4' />
+      </div>
+
+      <div className='flex items-center gap-2 px-4'>
+        <div>
+          <SearchInput />
         </div>
+        <UserNav />
       </div>
     </header>
-  )
+  );
 }

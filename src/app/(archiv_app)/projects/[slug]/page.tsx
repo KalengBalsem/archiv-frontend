@@ -9,9 +9,10 @@ import { ArrowLeft, ExternalLink } from "lucide-react"
 import { supabaseClient } from "@/utils/supabaseClient"
 import ModelViewer from "@/components/ModelViewer"
 import { Button } from "@/components/ui/button"
-import LayoutWrapper from "@/components/layout-wrapper"
 import AttachmentModal from "@/components/attachment-modal"
 import { mockProjects } from "@/lib/mockProjects"
+
+import PageContainer from "@/components/layout/page-container"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -36,12 +37,22 @@ export default function ProjectDetailPage() {
             users (username, display_name, avatar_url),
             licenses (name, url),
             building_typologies (name, description),
-            project_images (id, image_url, caption, position)
+            project_images (id, image_url, caption, position, created_at)
           `)
           .eq("slug", slug)
           .single()
+
+        if (error) throw error
+
+        // sort by `position`, fallback to `id` or `created_at` if undefined
+        data.project_images = [...data.project_images].sort((a, b) => {
+          if (a.position == null && b.position == null) return a.id - b.id
+          if (a.position == null) return 1
+          if (b.position == null) return -1
+          return a.position - b.position
+        })
         
-        if (error || !data || !data.users || !data.project_images?.length) {
+        if (!data || !data.users || !data.project_images?.length) {
           console.warn("Incomplete data, using mock for:", slug)
           const mock = mockProjects.find((p) => p.slug === slug)
           setProject(mock || data)
@@ -62,18 +73,15 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <LayoutWrapper>
-        <div className="container mx-auto px-4 py-16 text-center text-gray-600">
+        <PageContainer>
           Loading project...
-        </div>
-      </LayoutWrapper>
+        </PageContainer>
     )
   }
 
   if (!project) {
     return (
-      <LayoutWrapper>
-        <div className="container mx-auto px-4 py-16 text-center">
+      <PageContainer>
           <h1 className="text-2xl font-medium text-gray-900 mb-4">
             Project not found
           </h1>
@@ -83,27 +91,22 @@ export default function ProjectDetailPage() {
               Back to Projects Archive
             </Button>
           </Link>
-        </div>
-      </LayoutWrapper>
+      </PageContainer>
     )
   }
 
   return (
-    <LayoutWrapper>
-      <div className="container mx-auto px-4 py-8">
-        {/* Back button */}
-        <div className="mb-8">
-          <Link href="/projects">
-            <Button variant="outline" className="hover:bg-gray-50 bg-transparent">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Projects Archive
-            </Button>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <PageContainer>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Back button */}
+          <div>
+            <Link href="/projects">
+                <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </div>
+          <br></br>
           {/* 3D Viewer placeholder */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 m-4">
             {project.gltf_url ? (
               <div className="bg-gray-100 rounded-lg aspect-[4/3] overflow-hidden border">
                 <ModelViewer src={project.gltf_url} poster={project.thumbnail_url} className="w-full h-full" />
@@ -120,9 +123,9 @@ export default function ProjectDetailPage() {
               </div>
             )}
           </div>
-
+            
           {/* Project Details */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 my-4">
             <div className="space-y-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.title}</h1>
@@ -241,7 +244,7 @@ export default function ProjectDetailPage() {
         {/* Asumsi `project.project_images` adalah array (meski tidak ada di interface `Project`) */}
         {project.project_images?.length > 0 && (
           <div className="mt-16">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {/* DIUBAH: Menghapus `: any` untuk img */}
               {project.project_images.map((img: any) => (
                 <div
@@ -261,17 +264,6 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Attachment Modal */}
-      {selectedAttachment && (
-        <AttachmentModal
-          attachment={selectedAttachment}
-          attachments={project.project_images}
-          onClose={() => setSelectedAttachment(null)}
-          onNavigate={setSelectedAttachment}
-        />
-      )}
-    </LayoutWrapper>
+      </PageContainer>
   )
 }

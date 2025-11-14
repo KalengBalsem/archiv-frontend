@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import LayoutWrapper from "@/components/layout-wrapper"
+
+import PageContainer from "@/components/layout/page-container"
 
 // Building typology options
 const buildingTypes = [
@@ -183,7 +184,7 @@ export default function UploadPage() {
   }
 
   return (
-    <LayoutWrapper>
+    <PageContainer>
       <div className="container mx-auto px-4 py-8">
         {/* Back button */}
         <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8">
@@ -482,6 +483,6 @@ export default function UploadPage() {
           </div>
         </form>
       </div>
-    </LayoutWrapper>
+    </PageContainer>
   )
 }

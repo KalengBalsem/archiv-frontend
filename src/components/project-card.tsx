@@ -77,12 +77,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                   {project.user?.display_name || project.user?.username || "Unknown"}
                 </span>
               </div>
-              {project.location?.name && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{project.location.name}</span>
-                </div>
-              )}
             </div>
 
             {/* Building Type + Date */}
@@ -102,7 +96,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                 <Eye className="h-4 w-4" />
                 <span>{formatNumber(project.view_count)} views</span>
               </div>
-              <span>{formatNumber(project.interaction_count)} interactions</span>
+              <span>{formatNumber(project.interaction_count)} saves</span>
             </div>
           </div>
         </div>

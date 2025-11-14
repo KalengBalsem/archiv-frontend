@@ -4,12 +4,14 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { supabaseClient } from '@/utils/supabaseClient'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -67,6 +69,21 @@ export default function RegisterPage() {
       router.push("/")
     } catch (err) {
       setError("Failed to create account. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setError("")
+    setIsLoading(true)
+
+    try {
+      const redirectTo = searchParams?.get('redirectTo') ?? '/'
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
+      if (error) setError(error.message)
+    } catch (err) {
+      setError('Failed to start Google sign-up')
     } finally {
       setIsLoading(false)
     }
@@ -181,6 +198,17 @@ export default function RegisterPage() {
           <div className="flex-1 border-t border-gray-300"></div>
           <span className="text-sm text-gray-500">or</span>
           <div className="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        {/* OAuth Buttons */}
+        <div className="mt-6">
+          <Button
+            onClick={handleGoogleSignIn}
+            className="w-full h-11 border bg-white text-black hover:bg-gray-50"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Please wait...' : 'Continue with Google'}
+          </Button>
         </div>
 
         {/* Sign In Link */}

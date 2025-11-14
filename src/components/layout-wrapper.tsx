@@ -1,33 +1,26 @@
-"use client"
+"use client"; // 1. Tandai sebagai Client Component
 
-import type React from "react"
+import React from 'react';
+import Header from '@/components/header'; 
+import Sidebar from '@/components/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
-import { useState } from "react";
-import Header from "./header"
-import Sidebar from "./sidebar"
-
-interface LayoutWrapperProps {
-  children: React.ReactNode
-}
-
-export default function LayoutWrapper({ children }: LayoutWrapperProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen)
-  }
-
-  const closeSidebar = () => {
-    setSidebarOpen(false)
-  }
-
+export default function LayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="min-h-screen bg-white">
-      <Header onToggleSidebar={toggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
-
-      {/* Main content with sidebar offset */}
-      <main className="transition-all duration-200 ease-in-out">{children}</main>
+    <div className="flex">
+      <SidebarProvider>
+        <Sidebar />
+        <SidebarInset>
+          <Header />
+          {/* page main content */}
+          {children}
+          {/* page main content ends */}
+        </SidebarInset>
+      </SidebarProvider>
     </div>
-  )
+  );
 }

@@ -1,8 +1,5 @@
-import LayoutWrapper from "@/components/layout-wrapper"
-
 export default function AboutPage() {
   return (
-    <LayoutWrapper>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-8">About ARCH-IV</h1>
@@ -41,6 +38,5 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-    </LayoutWrapper>
   )
 }

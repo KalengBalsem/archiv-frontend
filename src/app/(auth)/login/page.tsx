@@ -4,16 +4,20 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { supabaseClient } from '@/utils/supabaseClient'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
+  const redirectTo = searchParams?.get('redirectTo') ?? '/'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,17 +25,43 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Replace with actual authentication logic
       if (!email || !password) {
         setError("Please fill in all fields")
         return
       }
-      console.log("[(auth)/login] Login attempt:", { email })
-      // Simulate login delay
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      router.push("/")
+
+      const { data, error: signInError } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        setError(signInError.message)
+        return
+      }
+
+      // Successful sign-in: navigate to redirect target
+      router.push(redirectTo)
     } catch (err) {
       setError("Invalid email or password")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setError("")
+    setIsLoading(true)
+
+    try {
+      // This will redirect the user to Google's OAuth consent screen.
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
+      if (error) {
+        setError(error.message)
+      }
+      // No router.push here; supabase will handle the redirect to Google
+    } catch (err) {
+      setError('Failed to start Google sign-in')
     } finally {
       setIsLoading(false)
     }
@@ -93,6 +123,17 @@ export default function LoginPage() {
           <div className="flex-1 border-t border-gray-300"></div>
           <span className="text-sm text-gray-500">or</span>
           <div className="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        {/* OAuth Buttons */}
+        <div className="mt-6">
+          <Button
+            onClick={handleGoogleSignIn}
+            className="w-full h-11 border bg-white text-black hover:bg-gray-50"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Please wait...' : 'Continue with Google'}
+          </Button>
         </div>
 
         {/* Sign Up Link */}

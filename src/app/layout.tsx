@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import "@/styles/globals.css"
 import { Roboto_Mono } from 'next/font/google'
+import { AuthProvider } from '@/providers/AuthProvider'
 
 const robotoMono = Roboto_Mono({
   subsets: ['latin'],
@@ -22,7 +23,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={robotoMono.variable}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

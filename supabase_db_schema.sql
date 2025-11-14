@@ -151,6 +151,10 @@ create policy "Users can update their own profile"
   on public.users for update
   using (auth.uid() = id);
 
+create policy "Users can insert their own profile"
+  on public.users for insert
+  with check (auth.uid() = id);
+
 -- PROJECTS
 create policy "Anyone can view published projects"
   on public.projects for select
