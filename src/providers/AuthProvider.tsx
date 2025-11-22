@@ -1,6 +1,5 @@
 "use client"
 
-import { ClerkProvider } from '@clerk/nextjs';
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabaseClient } from '@/utils/supabaseClient'
 import type { Session, User } from '@supabase/supabase-js'
@@ -56,9 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = { user, session, loading }
 
   return (
-    <ClerkProvider>
       <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-    </ClerkProvider>
   )
 }
 
