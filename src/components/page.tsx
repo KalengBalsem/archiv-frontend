@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@/providers/AuthProvider'
 import { useRouter } from 'next/navigation'
-import LayoutWrapper from "@/components/layout-wrapper"
+import { LayoutWrapper } from "@/components/layout-wrapper"
 
 export default function HomePage() {
   const { user, loading } = useAuth()
