@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Roboto_Mono } from 'next/font/google';
 import { ArrowRight, Box, Layers, FileJson, Maximize2, ChevronDown, LucideIcon } from 'lucide-react';
 
+import { supabaseClient } from '@/utils/supabaseClient'; // Ensure it's a named export, otherwise use default
+
 // Load font via Next.js optimization
 const robotoMono = Roboto_Mono({ 
   subsets: ['latin'],
@@ -75,17 +77,25 @@ export default function ArchIvLanding() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    
-    setStatus('loading');
-    // Simulate API call
-    setTimeout(() => {
-      setStatus('success');
-      setEmail('');
-    }, 1500);
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+        
+        setStatus('loading');
+
+        const { error } = await supabaseClient
+        .from('waitlist')
+        .insert([{ email }]);
+
+        if (error) {
+        console.error('Submission error:', error);
+        setStatus('idle');
+        // Optional: Add a toast/alert here
+        } else {
+        setStatus('success');
+        setEmail('');
+        }
+    };
 
   return (
     <div className={`min-h-screen bg-[#FAFAFA] text-neutral-900 selection:bg-neutral-900 selection:text-white relative flex flex-col ${robotoMono.className}`}>
