@@ -77,23 +77,37 @@ export default function ArchIvLanding() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
+// Ubah bagian handleSubmit menjadi seperti ini:
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email) return;
         
         setStatus('loading');
 
-        const { error } = await supabaseClient
-        .from('waitlist')
-        .insert([{ email }]);
+        try {
+        // Kita request ke API internal Next.js kita sendiri
+        const response = await fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
 
-        if (error) {
-        console.error('Submission error:', error);
-        setStatus('idle');
-        // Optional: Add a toast/alert here
-        } else {
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to submit');
+        }
+
+        // Jika sukses
         setStatus('success');
         setEmail('');
+        
+        } catch (error) {
+        console.error('Submission error:', error);
+        setStatus('idle');
+        // Opsional: Tampilkan alert error ke user
+        alert("Failed to join waitlist. Please try again.");
         }
     };
 
@@ -218,7 +232,7 @@ export default function ArchIvLanding() {
             <div className="space-y-2">
                <h4 className="text-sm font-bold uppercase tracking-wider">Supported Formats</h4>
                <div className="flex flex-wrap gap-2 max-w-sm">
-                 {['.3DM', '.RVT', '.DWG', '.AI', '.OBJ', '.PDF', '.IFC'].map((ext) => (
+                 {['.SKP', '.3DM', '.RVT', '.DWG', '.GLB', '.PDF', '.IFC'].map((ext) => (
                    <span key={ext} className="text-xs border border-neutral-200 px-2 py-1 text-neutral-500">
                      {ext}
                    </span>
