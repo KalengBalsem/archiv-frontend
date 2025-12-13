@@ -131,8 +131,7 @@ export default function ArchIvLanding() {
           ARCH-IV
         </div>
         <div className="flex gap-6 text-xs font-medium tracking-tight">
-          <a href="#" className="hover:underline underline-offset-4">MANIFESTO</a>
-          <span className="opacity-50 cursor-not-allowed">LOGIN</span>
+           <a href="/login" className="hover:underline underline-offset-4"><span>LOGIN</span></a>
         </div>
       </nav>
 
