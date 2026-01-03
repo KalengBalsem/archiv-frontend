@@ -6,11 +6,6 @@
   import { usePathname, useRouter } from "next/navigation";
 
   import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-  } from "@/components/ui/collapsible";
-  import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,

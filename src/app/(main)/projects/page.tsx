@@ -1,22 +1,19 @@
 "use client"
 
 import { useEffect, useState, Suspense } from "react"
-import { useSearchParams } from "next/navigation" // <- Impor baru
+import { useSearchParams } from "next/navigation" 
 import { supabaseClient } from "@/utils/supabaseClient"
 import { Project } from "@/types/project"
 import ProjectCard from "@/components/project-card"
-import { mockProjects } from "@/lib/mockProjects" // <- Perbaiki impor (tanpa
 import PageContainer from "@/components/layout/page-container"
+import { Loader2 } from "lucide-react"
 
-// 1. Logika pemanggilan data dipindahkan ke komponennya sendiri
-//    agar <Suspense> dapat menangkap hook useSearchParams()
 function ProjectGrid() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
-  // 2. Dapatkan parameter pencarian dari URL
   const searchParams = useSearchParams()
-  const searchQuery = searchParams.get("q") // <- Mendapat "?q=..."
+  const searchQuery = searchParams.get("q") 
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -35,16 +32,16 @@ function ProjectGrid() {
             status,
             views,
             created_at,
-            user:users(username, display_name),
-            building_typology:building_typologies(name),
-            license:licenses(name),
-            tags:project_tags(tag:tags(name)),
-            software:project_software(software:software(name))
+            users!user_id ( full_name, avatar_url ),
+            building_typologies ( name ),
+            licenses ( name ),
+            locations ( name ),
+            project_tags ( tags ( name ) ),
+            project_software ( software ( name ) )
           `)
           .eq("status", "published")
           .order("created_at", { ascending: false })
 
-        // 3. Terapkan filter pencarian di sisi server!
         if (searchQuery) {
           queryBuilder = queryBuilder.ilike("title", `%${searchQuery}%`)
         }
@@ -53,41 +50,49 @@ function ProjectGrid() {
 
         if (error) {
           console.error("Supabase error:", error)
-          console.warn("⚠️ Using mock projects instead")
-          setProjects(mockProjects)
-        } else if (data && data.length > 0) {
-          const normalized = data.map((p: any) => ({
-            ...p,
-            user: Array.isArray(p.user) ? p.user[0] : p.user,
-            building_typology: Array.isArray(p.building_typology) ? p.building_typology[0] : p.building_typology,
-            license: Array.isArray(p.license) ? p.license[0] : p.license,
+          setProjects([])
+        } else if (data) {
+          const normalized: Project[] = data.map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+            description: p.description,
+            thumbnail_url: p.thumbnail_url,
+            gltf_url: p.gltf_url,
+            status: p.status,
+            views: p.views || 0,
+            created_at: p.created_at,
+            
+            author: {
+                name: (Array.isArray(p.users) ? p.users[0] : p.users)?.full_name || "Unknown Architect",
+                avatar_url: (Array.isArray(p.users) ? p.users[0] : p.users)?.avatar_url
+            },
+            typology: p.building_typologies?.name || "Unknown Type",
+            license: p.licenses?.name || "All Rights Reserved",
+            location: p.locations?.name || "Indonesia",
+            
+            tags: p.project_tags?.map((pt: any) => pt.tags?.name) || [],
+            software: p.project_software?.map((ps: any) => ps.software?.name) || []
           }))
+
           setProjects(normalized)
-        } else {
-          setProjects([]) // Tidak ada data
-          if (!searchQuery) {
-             console.warn("⚠️ No Supabase projects found — using mock data")
-             setProjects(mockProjects)
-          }
         }
       } catch (e) {
-        console.error("⚠️ Failed to fetch from Supabase:", e)
-        setProjects(mockProjects)
+        console.error("Failed to fetch:", e)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     fetchProjects()
-  // 4. Jalankan ulang efek ini setiap kali `searchQuery` dari URL berubah
   }, [searchQuery])
 
-  // 5. Logika 'filteredProjects' tidak lagi diperlukan.
-  //    Supabase telah melakukan pemfilteran untuk kita.
   return (
     <>
       {loading ? (
-        <p className="text-center text-gray-500">Loading projects...</p>
+        <div className="flex justify-center items-center h-64">
+             <Loader2 className="w-8 h-8 animate-spin text-gray-400"/>
+        </div>
       ) : projects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {projects.map((project) => (
@@ -95,27 +100,26 @@ function ProjectGrid() {
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500">
-          {searchQuery
-            ? `No projects found for "${searchQuery}".`
-            : "No projects found."}
+        <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed">
+          <p className="text-gray-500">
+            {searchQuery
+              ? `No projects found for "${searchQuery}".`
+              : "No projects uploaded yet."}
+          </p>
         </div>
       )}
     </>
   )
 }
 
-
-// --- Komponen Halaman Utama Anda ---
 export default function HomePage() {
-  // Semua state (searchQuery, showFilters, dll.) telah dihapus.
-  // Semua 'useEffect' telah dipindahkan ke ProjectGrid.
-
   return (
     <PageContainer scrollable={true}>
-      <Suspense fallback={<p className="text-center text-gray-500">Loading...</p>}>
-        <ProjectGrid />
-      </Suspense>
+      <div className="container mx-auto px-4 py-8">
+        <Suspense fallback={<p>Loading projects...</p>}>
+           <ProjectGrid />
+        </Suspense>
+      </div>
     </PageContainer>
   )
 }
