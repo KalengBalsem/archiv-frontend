@@ -56,6 +56,11 @@
       url: "/upload",
       icon: "add",
     },
+    {
+      title: "About",
+      url: "/about",
+      icon: "info-circle",
+    },
   ];
 
   export default function AppSidebar() {

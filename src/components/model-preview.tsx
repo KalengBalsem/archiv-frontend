@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import ModelViewer from "./ModelViewer"
+import ModelViewer from "./model-viewer"
 
 interface Props {
   src: string

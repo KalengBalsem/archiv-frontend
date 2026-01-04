@@ -1,4 +1,3 @@
-// types/project.ts
 export interface Project {
   id: string
   title: string
@@ -20,4 +19,5 @@ export interface Project {
   location: string
   tags: string[]
   software: string[]
+  completed_date?: string
 }

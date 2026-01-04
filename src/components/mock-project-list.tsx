@@ -55,9 +55,6 @@ export default function ProjectsList() {
           <p className="text-sm text-gray-600 line-clamp-2">
             {project.description}
           </p>
-          <div className="mt-2 text-xs text-gray-400">
-            {project.location?.name || "Unknown location"}
-          </div>
         </div>
       ))}
     </div>

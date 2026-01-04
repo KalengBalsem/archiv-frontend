@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PageContainer from "@/components/layout/page-container"
 import { convertPdfToImages } from "@/utils/pdf-converter"
 // Import the FilePreview component above (or from separate file)
-import { FilePreview } from "@/components/FilePreview" 
+import { FilePreview } from "@/components/file-preview" 
 
 // --- HELPER FUNCTIONS ---
 const generateSlug = (title: string) => {
@@ -226,9 +226,9 @@ export default function AdminUploadPage() {
   if (!isAuthorized) return (
     <PageContainer>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-            <ShieldAlert className="h-12 w-12 text-red-500 mb-4"/>
-            <h1 className="text-xl font-bold">Access Denied</h1>
-            <p className="text-gray-500 mb-6">Admins only.</p>
+            <h1 className="text-xl font-bold">Access Unavailable</h1>
+            <p className="text-gray-500">The upload feature is currently only available to administrators.</p>
+            <p className="text-gray-500 mb-6">Please contact an administrator provided you want to upload your works.</p>
             <Link href="/"><Button variant="outline">Go Home</Button></Link>
         </div>
     </PageContainer>
@@ -240,7 +240,7 @@ export default function AdminUploadPage() {
         <Link href="/" className="flex items-center text-gray-500 hover:text-black mb-6"><ArrowLeft className="h-4 w-4 mr-2"/> Back</Link>
         
         <div className="mb-8">
-            <h1 className="text-3xl font-light flex items-center gap-2 mb-2"><User className="h-8 w-8"/> Admin Upload</h1>
+            <h1 className="text-3xl flex items-center gap-2 mb-2"><User className="h-8 w-8"/> Admin Upload</h1>
             <p className="text-gray-500">Upload on behalf of students.</p>
         </div>
 

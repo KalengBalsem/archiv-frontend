@@ -1,11 +1,37 @@
+import Image from "next/image"
+import type { Metadata } from "next"
+
+// 1. Add Metadata
+export const metadata: Metadata = {
+  title: "About ARCH-IV | Global 3D Architectural Archive",
+  description: "Explore ARCH-IV, a digital archive preserving contemporary and historical 3D architectural models for architects, students, and enthusiasts.",
+  openGraph: {
+    title: "About ARCH-IV",
+    description: "Preserving and showcasing 3D architectural models from around the world.",
+    // images: ['/your-og-image.jpg'], // Optional: Add an OG image
+  },
+}
+
 export default function AboutPage() {
   return (
-      <div className="container mx-auto px-4 py-8">
+      // 2. Use <main> for semantic structure
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-8">About ARCH-IV</h1>
 
           <div className="prose prose-lg max-w-none">
             <div className="space-y-6 text-gray-700 leading-relaxed">
+              <div className="flex justify-center">
+                <Image
+                  src="https://assets.archiv.tech/archiv_violet.png"
+                  // 3. SEO-friendly Alt Text
+                  alt="ARCH-IV logo representing digital architectural preservation"
+                  width={500}
+                  height={300}
+                  priority // Optional: Loads faster as it's above the fold
+                />
+              </div>
+              
               <p>
                 ARCH-IV is a comprehensive digital archive dedicated to preserving and showcasing 3D architectural
                 models from around the world. Our mission is to create an accessible platform where architects,
@@ -37,6 +63,6 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
   )
 }

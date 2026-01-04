@@ -7,7 +7,7 @@ import Image from "next/image"
 import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react"
 
 import { supabaseClient } from "@/utils/supabaseClient"
-import ModelViewer from "@/components/ModelViewer"
+import ModelViewer from "@/components/model-viewer"
 import { Button } from "@/components/ui/button"
 import AttachmentModal from "@/components/attachment-modal"
 import { mockProjects } from "@/lib/mockProjects"
