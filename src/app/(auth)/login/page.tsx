@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  const redirectTo = searchParams?.get('redirectTo') ?? '/'
+  const redirectTo = searchParams?.get('redirectTo') ?? '/projects'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

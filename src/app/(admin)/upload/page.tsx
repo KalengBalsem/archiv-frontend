@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { supabaseClient } from "@/utils/supabaseClient" 
-import { ArrowLeft, Loader2, FileText, Image as ImageIcon, Box, User, Users, ShieldAlert, Search } from "lucide-react"
+import { ArrowLeft, Loader2, FileText, Image as ImageIcon, Box, User, Users, ShieldAlert, Search, RefreshCw, PenTool, Plus, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import PageContainer from "@/components/layout/page-container"
 import { convertPdfToImages } from "@/utils/pdf-converter"
-// Import the FilePreview component above (or from separate file)
 import { FilePreview } from "@/components/file-preview" 
 
 // --- HELPER FUNCTIONS ---
@@ -27,8 +26,24 @@ export default function AdminUploadPage() {
   
   // --- STATE ---
   const [formData, setFormData] = useState({
-    title: "", description: "", buildingTypeId: "", locationId: "", completionDate: "", status: "published", licenseId: "", ownerId: "",
+    title: "", 
+    description: "", 
+    buildingTypeId: "", 
+    locationId: "", 
+    completionDate: "", 
+    status: "published", 
+    licenseId: "", 
+    ownerId: "", 
+    manualAuthor: "" 
   })
+
+  // Toggle state for Author Mode
+  const [isManualAuthorMode, setIsManualAuthorMode] = useState(false)
+
+  // [NEW] State for Manual Contributors
+  const [manualContributors, setManualContributors] = useState<{name: string, role: string}[]>([])
+  const [tempContributorName, setTempContributorName] = useState("")
+  const [tempContributorRole, setTempContributorRole] = useState("Team Member")
 
   // Options
   const [options, setOptions] = useState<{
@@ -63,7 +78,6 @@ export default function AdminUploadPage() {
 
         setIsAuthorized(true)
 
-        // Fetch all options in parallel
         const [users, types, licenses, soft, tags, locs] = await Promise.all([
           supabaseClient.from('users').select('id, full_name, email'),
           supabaseClient.from('building_typologies').select('id, name'),
@@ -105,6 +119,21 @@ export default function AdminUploadPage() {
     }))
   }
 
+  // [NEW] Manual Contributor Handlers
+  const addManualContributor = () => {
+    if (!tempContributorName.trim()) return
+    setManualContributors([...manualContributors, { 
+        name: tempContributorName, 
+        role: tempContributorRole 
+    }])
+    setTempContributorName("") 
+    setTempContributorRole("Team Member")
+  }
+
+  const removeManualContributor = (index: number) => {
+    setManualContributors(prev => prev.filter((_, i) => i !== index))
+  }
+
   // --- FILE HANDLING ---
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return
@@ -116,7 +145,6 @@ export default function AdminUploadPage() {
     try {
       for (const file of files) {
         if (file.type === 'application/pdf') {
-          // Convert PDF using helper
           const images = await convertPdfToImages(file, (curr, total) => {
              setPdfState(prev => ({ ...prev, progress: `Converting ${file.name}: Page ${curr}/${total}` }))
           })
@@ -133,13 +161,12 @@ export default function AdminUploadPage() {
     }
   }
 
-  // --- UPLOAD HELPER (ROBUST) ---
+  // --- UPLOAD HELPER ---
   const uploadFile = async (file: File | null, folder: string) => {
     if (!file) return null
     const { data: { session } } = await supabaseClient.auth.getSession()
     if (!session) throw new Error("No session")
 
-    // 1. Detect/Fallback File Type
     let fileType = file.type
     if (!fileType) {
         const ext = file.name.split('.').pop()?.toLowerCase()
@@ -147,20 +174,15 @@ export default function AdminUploadPage() {
         fileType = map[ext || ''] || 'application/octet-stream'
     }
 
-    // 2. Sanitize Filename
-    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-
-    // 3. Get Presigned URL
     const initRes = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ filename: cleanName, filetype: fileType, folder })
+        body: JSON.stringify({ filename: file.name, filetype: fileType, folder, filesize: file.size })
     })
     
     if (!initRes.ok) throw new Error("Upload init failed")
     const { uploadUrl, publicUrl } = await initRes.json()
 
-    // 4. Upload to R2
     const uploadRes = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': fileType } })
     if (!uploadRes.ok) throw new Error("Storage upload failed")
 
@@ -170,13 +192,15 @@ export default function AdminUploadPage() {
   // --- SUBMIT ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.title || !formData.ownerId || !modelFile || !thumbnailFile) return alert("Missing required fields")
+    
+    const hasOwner = isManualAuthorMode ? !!formData.manualAuthor : !!formData.ownerId;
+    
+    if (!formData.title || !hasOwner || !modelFile || !thumbnailFile) return alert("Missing required fields (Title, Owner, Model, or Thumbnail)")
 
     setIsSubmitting(true)
     setUploadStatus("Uploading assets...")
 
     try {
-        // Upload everything in parallel
         const [modelUrl, thumbUrl, ...galleryUrls] = await Promise.all([
             uploadFile(modelFile, 'models'),
             uploadFile(thumbnailFile, 'images'),
@@ -185,12 +209,17 @@ export default function AdminUploadPage() {
 
         setUploadStatus("Saving data...")
         
-        // Create Project
+        const finalUserId = isManualAuthorMode ? null : formData.ownerId; 
+        const finalAuthorName = isManualAuthorMode ? formData.manualAuthor : null; 
+        
         const { data: project, error } = await supabaseClient.from('projects').insert({
             title: formData.title,
             slug: generateSlug(formData.title),
             description: formData.description,
-            user_id: formData.ownerId,
+            
+            user_id: finalUserId,
+            author_name: finalAuthorName,
+
             building_typology_id: formData.buildingTypeId,
             location_id: formData.locationId,
             license_id: formData.licenseId,
@@ -202,9 +231,26 @@ export default function AdminUploadPage() {
 
         if (error) throw error
 
-        // Create Relations
         const batchOps = [
-            ...selections.contributors.map(uid => supabaseClient.from('project_contributors').insert({ project_id: project.id, user_id: uid, role: 'Team Member' })),
+            // 1. Registered Contributors
+            ...selections.contributors.map(uid => 
+                supabaseClient.from('project_contributors').insert({ 
+                    project_id: project.id, 
+                    user_id: uid, 
+                    role: 'Team Member' 
+                })
+            ),
+            
+            // 2. [NEW] Manual Contributors
+            ...manualContributors.map(c => 
+                supabaseClient.from('project_contributors').insert({ 
+                    project_id: project.id, 
+                    user_id: null,
+                    name: c.name,
+                    role: c.role 
+                })
+            ),
+
             ...selections.software.map(sid => supabaseClient.from('project_software').insert({ project_id: project.id, software_id: sid })),
             ...selections.tags.map(tid => supabaseClient.from('project_tags').insert({ project_id: project.id, tag_id: tid })),
             ...galleryUrls.filter(Boolean).map((url, i) => supabaseClient.from('project_images').insert({ project_id: project.id, image_url: url, caption: `Gallery ${i+1}`, position: i }))
@@ -220,19 +266,8 @@ export default function AdminUploadPage() {
     }
   }
 
-  // --- RENDER ---
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin mr-2"/> Verifying...</div>
-  
-  if (!isAuthorized) return (
-    <PageContainer>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-            <h1 className="text-xl font-bold">Access Unavailable</h1>
-            <p className="text-gray-500">The upload feature is currently only available to administrators.</p>
-            <p className="text-gray-500 mb-6">Please contact an administrator provided you want to upload your works.</p>
-            <Link href="/"><Button variant="outline">Go Home</Button></Link>
-        </div>
-    </PageContainer>
-  )
+  if (!isAuthorized) return <PageContainer>Access Denied</PageContainer>
 
   return (
     <PageContainer>
@@ -246,27 +281,122 @@ export default function AdminUploadPage() {
 
         <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
             
-            {/* OWNER */}
+            {/* OWNER SELECTION */}
             <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
-                <label className="text-sm font-bold text-blue-900 block mb-2">Project Owner *</label>
-                <Select onValueChange={(v) => handleSelect("ownerId", v)}>
-                    <SelectTrigger className="bg-white"><SelectValue placeholder="Select Student" /></SelectTrigger>
-                    <SelectContent>{options.users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent>
-                </Select>
-                
-                <div className="mt-4">
-                    <label className="text-sm font-medium text-blue-900 flex items-center gap-2 mb-2"><Users className="w-4 h-4"/> Contributors</label>
-                    <div className="relative mb-2">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-blue-400" />
-                        <Input placeholder="Search..." className="pl-9 bg-white" value={contributorSearch} onChange={e => setContributorSearch(e.target.value)} />
+                <div className="flex justify-between items-center mb-4">
+                    <label className="text-sm font-bold text-blue-900 block">Project Owner / Author *</label>
+                    
+                    <button 
+                        type="button"
+                        onClick={() => setIsManualAuthorMode(!isManualAuthorMode)}
+                        className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 underline transition-colors"
+                    >
+                        {isManualAuthorMode ? <><RefreshCw className="w-3 h-3"/> Switch to Registered User</> : <><PenTool className="w-3 h-3"/> Input Manual Name (Unregistered)</>}
+                    </button>
+                </div>
+
+                {isManualAuthorMode ? (
+                    <div className="animate-in fade-in zoom-in duration-200">
+                        <Input 
+                            name="manualAuthor"
+                            placeholder="e.g. Sarah Senior (Alumni 2023)"
+                            value={formData.manualAuthor}
+                            onChange={handleInput}
+                            className="bg-white border-blue-300 focus-visible:ring-blue-400"
+                        />
+                        <p className="text-xs text-blue-600 mt-2">
+                            This creates a project without linking to a specific user account. 
+                            The name entered here will be displayed publicly.
+                        </p>
                     </div>
-                    <div className="h-32 overflow-y-auto border rounded bg-white p-2 grid grid-cols-2 gap-2">
-                        {options.users.filter(u => u.id !== formData.ownerId && u.name.toLowerCase().includes(contributorSearch.toLowerCase())).map(u => (
-                            <div key={u.id} onClick={() => toggleSelection('contributors', u.id)} 
-                                 className={`cursor-pointer text-xs p-2 rounded border truncate ${selections.contributors.includes(u.id) ? 'bg-blue-600 text-white' : 'hover:bg-gray-50'}`}>
-                                {u.name}
+                ) : (
+                    <div className="animate-in fade-in zoom-in duration-200">
+                        <Select onValueChange={(v) => handleSelect("ownerId", v)}>
+                            <SelectTrigger className="bg-white"><SelectValue placeholder="Select Registered Student" /></SelectTrigger>
+                            <SelectContent>
+                                {options.users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-blue-600 mt-2">The selected user will be able to edit this project later.</p>
+                    </div>
+                )}
+                
+                {/* [UPDATED] CONTRIBUTORS SECTION (Mixed Manual & Registered) */}
+                <div className="mt-6 pt-4 border-t border-blue-200">
+                    <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider">Project Team</h3>
+                    
+                    {/* A. REGISTERED USERS (Search) */}
+                    <div className="mb-6">
+                        <label className="text-sm font-medium text-blue-900 flex items-center gap-2 mb-2"><Users className="w-4 h-4"/> Registered Members (With Account)</label>
+                        <div className="relative mb-2">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-blue-400" />
+                            <Input placeholder="Search students..." className="pl-9 bg-white" value={contributorSearch} onChange={e => setContributorSearch(e.target.value)} />
+                        </div>
+                        {/* Selected Registered List */}
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {selections.contributors.map(uid => {
+                                const user = options.users.find(u => u.id === uid)
+                                return (
+                                    <div key={uid} className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                        {user?.name}
+                                        <button type="button" onClick={() => toggleSelection('contributors', uid)}><X className="w-3 h-3"/></button>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        {/* Search Results */}
+                        {contributorSearch && (
+                            <div className="h-24 overflow-y-auto border rounded bg-white p-2 grid grid-cols-2 gap-2">
+                                {options.users
+                                    .filter(u => u.id !== formData.ownerId && u.name.toLowerCase().includes(contributorSearch.toLowerCase()))
+                                    .map(u => (
+                                    <div key={u.id} onClick={() => toggleSelection('contributors', u.id)} 
+                                            className={`cursor-pointer text-xs p-2 rounded border truncate hover:bg-gray-50`}>
+                                        {u.name}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        )}
+                    </div>
+
+                    {/* B. MANUAL CONTRIBUTORS (Input) */}
+                    <div className="pt-4 border-t border-blue-200">
+                        <label className="text-sm font-medium text-blue-900 flex items-center gap-2 mb-2"><PenTool className="w-4 h-4"/> Manual Contributors (No Account)</label>
+                        
+                        <div className="flex gap-2 mb-3">
+                            <Input 
+                                placeholder="Name (e.g. Mr. Budi)" 
+                                className="bg-white flex-1"
+                                value={tempContributorName}
+                                onChange={(e) => setTempContributorName(e.target.value)}
+                            />
+                            <Input 
+                                placeholder="Role (e.g. Structural)" 
+                                className="bg-white w-1/3" 
+                                value={tempContributorRole}
+                                onChange={(e) => setTempContributorRole(e.target.value)}
+                            />
+                            <Button type="button" onClick={addManualContributor} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                                <Plus className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        {/* Manual List */}
+                        <div className="space-y-2">
+                            {manualContributors.map((c, idx) => (
+                                <div key={idx} className="flex justify-between items-center bg-white border border-blue-200 px-3 py-2 rounded text-sm">
+                                    <div>
+                                        <span className="font-medium text-gray-900">{c.name}</span>
+                                        <span className="text-gray-400 mx-2">|</span>
+                                        <span className="text-gray-500 text-xs uppercase">{c.role}</span>
+                                    </div>
+                                    <button type="button" onClick={() => removeManualContributor(idx)} className="text-red-400 hover:text-red-600">
+                                        <X className="w-4 h-4"/>
+                                    </button>
+                                </div>
+                            ))}
+                            {manualContributors.length === 0 && <p className="text-xs text-gray-400 italic">No manual contributors added.</p>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -341,12 +471,9 @@ export default function AdminUploadPage() {
                             Add Files <input type="file" multiple accept=".pdf,image/*" className="hidden" onChange={handleFiles} disabled={pdfState.processing}/>
                         </label>
                     </div>
-
-                    {/* LAG-FREE PREVIEW GRID */}
                     {additionalFiles.length > 0 && (
                         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                             {additionalFiles.map((file, i) => (
-                                // This assumes you put FilePreview in the same file or imported it
                                 <FilePreview key={`${file.name}-${i}`} file={file} onRemove={() => setAdditionalFiles(prev => prev.filter((_, idx) => idx !== i))}/>
                             ))}
                         </div>
