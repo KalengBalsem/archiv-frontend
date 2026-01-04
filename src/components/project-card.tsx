@@ -31,7 +31,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link href={`/projects/${project.slug}`} className="group block h-full">
       <div className="group cursor-pointer flex flex-col h-full">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 h-full flex flex-col">
           
           {/* --- THUMBNAIL AREA --- */}
           <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
@@ -42,6 +42,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                 width={600}
                 height={450}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">

@@ -1,143 +1,128 @@
 "use client"
 
-import type React from "react";
-import Image from "next/image";
-import { X, Download, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-interface Attachment {
-  id: string
-  title: string
-  type: string
-  category: string
-  file_url: string
-  thumbnail_url: string
-  file_size: string
-  file_format: string
-  uploaded_at: string
-  description: string
-}
+import { useState, useRef } from "react"
+import Image from "next/image"
+import { X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react"
 
 interface AttachmentModalProps {
-  attachment: Attachment | null
-  attachments: Attachment[]
+  attachment: { file_url: string; title: string } | null
   onClose: () => void
-  onNavigate: (attachment: Attachment) => void
 }
 
-export default function AttachmentModal({ attachment, attachments, onClose, onNavigate }: AttachmentModalProps) {
+export default function AttachmentModal({ attachment, onClose }: AttachmentModalProps) {
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStart = useRef({ x: 0, y: 0 })
+
   if (!attachment) return null
 
-  const currentIndex = attachments.findIndex((att) => att.id === attachment.id)
-  const hasPrevious = currentIndex > 0
-  const hasNext = currentIndex < attachments.length - 1
+  // --- HANDLERS ---
 
-  const handlePrevious = () => {
-    if (hasPrevious) {
-      onNavigate(attachments[currentIndex - 1])
+  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.5, 4))
+  const handleZoomOut = () => {
+    setScale((prev) => {
+      const newScale = Math.max(prev - 0.5, 1)
+      if (newScale === 1) setPosition({ x: 0, y: 0 }) // Reset posisi jika zoom out full
+      return newScale
+    })
+  }
+  const handleReset = () => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }
+
+  // Zoom dengan Scroll Mouse
+  const handleWheel = (e: React.WheelEvent) => {
+    e.stopPropagation()
+    if (e.deltaY < 0) handleZoomIn()
+    else handleZoomOut()
+  }
+
+  // Geser Gambar (Pan)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale > 1) { // Hanya bisa geser jika sedang di-zoom
+      e.preventDefault()
+      setIsDragging(true)
+      dragStart.current = { x: e.clientX - position.x, y: e.clientY - position.y }
     }
   }
 
-  const handleNext = () => {
-    if (hasNext) {
-      onNavigate(attachments[currentIndex + 1])
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && scale > 1) {
+      e.preventDefault()
+      setPosition({
+        x: e.clientX - dragStart.current.x,
+        y: e.clientY - dragStart.current.y,
+      })
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") onClose()
-    if (e.key === "ArrowLeft" && hasPrevious) handlePrevious()
-    if (e.key === "ArrowRight" && hasNext) handleNext()
-  }
+  const handleMouseUp = () => setIsDragging(false)
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 overflow-hidden"
       onClick={onClose}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
     >
-      <div
-        className="bg-white rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden"
+      {/* Container Gambar (Relative untuk posisi absolut tombol) */}
+      <div 
+        className="relative w-full h-full flex items-center justify-center" 
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold text-gray-900">{attachment.title}</h2>
-            <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-              <Badge variant="secondary">{attachment.file_format}</Badge>
-              <span>{attachment.file_size}</span>
-              <span>{attachment.category}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <a href={attachment.file_url} download target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </a>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
+        
+        {/* --- TOMBOL KONTROL (Floating) --- */}
+        <div className="absolute top-4 right-4 z-50 flex flex-col gap-2">
+           <button
+            onClick={onClose}
+            className="bg-black/50 p-2 rounded-full text-white hover:bg-black/80 transition-colors mb-4"
+            title="Close"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          <div className="flex flex-col bg-gray-800/80 rounded-lg overflow-hidden backdrop-blur-sm">
+            <button onClick={handleZoomIn} className="p-3 text-white hover:bg-gray-700 active:bg-gray-600" title="Zoom In">
+              <ZoomIn className="h-5 w-5" />
+            </button>
+            <button onClick={handleZoomOut} className="p-3 text-white hover:bg-gray-700 active:bg-gray-600" title="Zoom Out">
+              <ZoomOut className="h-5 w-5" />
+            </button>
+            <button onClick={handleReset} className="p-3 text-white hover:bg-gray-700 active:bg-gray-600 border-t border-gray-600" title="Reset View">
+              <RefreshCw className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="relative">
-          {/* Navigation Arrows */}
-          {hasPrevious && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white"
-              onClick={handlePrevious}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          )}
-          {hasNext && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white"
-              onClick={handleNext}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          )}
-
-          {/* Image */}
-          <div className="flex items-center justify-center bg-gray-100 min-h-[400px] max-h-[60vh]">
+        {/* --- AREA GAMBAR --- */}
+        <div
+          className="relative w-full h-full flex items-center justify-center overflow-hidden"
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          style={{ cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
+        >
+          <div
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              transition: isDragging ? "none" : "transform 0.2s ease-out", // Halus saat zoom, responsif saat geser
+            }}
+            className="flex items-center justify-center"
+          >
             <Image
-              src={attachment.file_url || "/placeholder.svg"}
+              src={attachment.file_url}
               alt={attachment.title}
-              width={800}
-              height={600}
-              className="max-w-full max-h-full object-contain"
+              width={1200}
+              height={1200}
+              className="max-h-[90vh] w-auto max-w-[90vw] object-contain select-none pointer-events-none" // pointer-events-none agar tidak mengganggu drag container
+              priority
+              draggable={false}
             />
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-700 mb-2">{attachment.description}</p>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>
-              Uploaded on{" "}
-              {new Date(attachment.uploaded_at).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </span>
-            <span>
-              {currentIndex + 1} of {attachments.length}
-            </span>
-          </div>
-        </div>
+        
       </div>
     </div>
   )

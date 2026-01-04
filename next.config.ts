@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: '*.archiv.tech',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: '**.r2.dev',
         pathname: '/**',
       },

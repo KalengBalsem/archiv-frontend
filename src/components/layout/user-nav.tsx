@@ -32,7 +32,7 @@ export function UserNav() {
   // 2. Fungsi Logout Manual
   const handleSignOut = async () => {
     await supabaseClient.auth.signOut();
-    router.push('/auth/sign-in'); // Redirect ke halaman login
+    router.push('/login'); // Redirect ke halaman login
     router.refresh();
   };
 

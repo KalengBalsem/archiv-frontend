@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 // Tipe ini SEKARANG SESUAI dengan error TypeScript Anda
 type FormattedUser = {
   fullName: string | null;
-  imageUrl: string | undefined; // 1. UBAH DI SINI: dari 'string | null'
+  imageUrl: string | undefined;
   emailAddresses: {
     emailAddress: string;
   }[];
@@ -44,7 +44,7 @@ export function useUserData() {
       // 3. Format data agar sesuai dengan kebutuhan komponen
       const formattedUser: FormattedUser = {
         fullName: profile.full_name,
-        // 2. UBAH DI SINI: Konversi `null` menjadi `undefined`
+        // 2. Konversi `null` menjadi `undefined`
         imageUrl: profile.avatar_url || undefined,
         emailAddresses: authUser.email ? [{ emailAddress: authUser.email }] : [],
       };

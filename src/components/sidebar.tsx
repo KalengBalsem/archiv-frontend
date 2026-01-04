@@ -19,14 +19,10 @@
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarMenuSub,
-    SidebarMenuSubButton,
-    SidebarMenuSubItem,
   } from "@/components/ui/sidebar";
 
   import { UserAvatarProfile } from "@/components/user-avatar-profile";
@@ -45,11 +41,11 @@
   import { useUserData } from "@/hooks/use-user-data";
 
   const navItems = [
-    {
-      title: "Home",
-      url: "/",
-      icon: "logo",
-    },
+    // {
+    //   title: "Home",
+    //   url: "/",
+    //   icon: "logo",
+    // },
     {
       title: "Projects",
       url: "/projects",
@@ -110,7 +106,7 @@
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )})};
+                )})}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
