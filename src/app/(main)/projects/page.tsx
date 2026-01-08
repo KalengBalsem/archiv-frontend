@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation" 
 import { supabaseClient } from "@/utils/supabaseClient"
 import { Project } from "@/types/project"
-import ProjectCard from "@/components/project-card"
+import ProjectCard from "@/components/project_page/project-card"
 import PageContainer from "@/components/layout/page-container"
 import { Loader2 } from "lucide-react"
 
