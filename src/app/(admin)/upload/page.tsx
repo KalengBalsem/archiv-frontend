@@ -272,7 +272,7 @@ export default function AdminUploadPage() {
   return (
     <PageContainer>
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <Link href="/" className="flex items-center text-gray-500 hover:text-black mb-6"><ArrowLeft className="h-4 w-4 mr-2"/> Back</Link>
+        <Link href="/projects" className="flex items-center text-gray-500 hover:text-black mb-6"><ArrowLeft className="h-4 w-4 mr-2"/> Back</Link>
         
         <div className="mb-8">
             <h1 className="text-3xl flex items-center gap-2 mb-2"><User className="h-8 w-8"/> Admin Upload</h1>

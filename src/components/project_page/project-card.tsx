@@ -71,7 +71,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <div className="p-5 flex flex-col flex-grow">
             
             {/* Title */}
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
               {project.title}
             </h3>
 

@@ -37,7 +37,8 @@ function ProjectGrid() {
             licenses ( name ),
             locations ( name ),
             project_tags ( tags ( name ) ),
-            project_software ( software ( name ) )
+            project_software ( software ( name ) ),
+            author_name
           `)
           .eq("status", "published")
           .order("created_at", { ascending: false })
@@ -64,7 +65,7 @@ function ProjectGrid() {
             created_at: p.created_at,
             
             author: {
-                name: (Array.isArray(p.users) ? p.users[0] : p.users)?.full_name || "Unknown Architect",
+                name: (Array.isArray(p.users) ? p.users[0] : p.users)?.full_name || p.author_name || "Unknown Architect",
                 avatar_url: (Array.isArray(p.users) ? p.users[0] : p.users)?.avatar_url
             },
             typology: p.building_typologies?.name || "Unknown Type",
