@@ -1,7 +1,6 @@
 // app/api/waitlist/route.ts
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { supabaseClient } from '@/utils/supabaseClient';
+import { createSupabaseServerClient } from '@/utils/supabaseServerClient';
 
 export async function POST(request: Request) {
   try {
@@ -11,9 +10,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Inisialisasi Supabase dengan Service Role Key (Bypass RLS)
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+    }
 
-    const { error } = await supabaseClient
+    const supabase = await createSupabaseServerClient();
+
+    const { error } = await supabase
       .from('waitlist')
       .insert([{ email }]);
 

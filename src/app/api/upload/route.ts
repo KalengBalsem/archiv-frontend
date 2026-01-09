@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { supabaseClient } from '@/utils/supabaseClient'
+import { createSupabaseServerClient } from '@/utils/supabaseServerClient'
 // [NEW] Import crypto to generate UUIDs (Standard Node.js library)
 import crypto from 'crypto' 
 
@@ -38,14 +38,11 @@ const s3Client = new S3Client({
 
 export async function POST(req: Request) {
   try {
-    // 1. AUTH CHECK
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+    // 1. AUTH CHECK - Use server client for proper auth verification
+    const supabase = await createSupabaseServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    if (authError || !user) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // 2. PARSE BODY
     const body = await req.json()
@@ -53,14 +50,19 @@ export async function POST(req: Request) {
 
     if (!filename || !filetype) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
 
-    // 3. VALIDATE
+    // 3. VALIDATE FILE TYPE (Security: prevent malicious file uploads)
+    if (!ALLOWED_FILE_TYPES.includes(filetype)) {
+      return NextResponse.json({ error: 'File type not allowed' }, { status: 400 })
+    }
+
+    // 4. VALIDATE FOLDER AND SIZE
     const targetFolder = ALLOWED_FOLDERS.includes(folder) ? folder : 'others';
     const maxSize = MAX_FILE_SIZES[targetFolder];
     if (filesize && filesize > maxSize) {
       return NextResponse.json({ error: `File too large (Max ${maxSize / 1024 / 1024}MB)` }, { status: 400 })
     }
     
-    // 4. GENERATE KEY (THE GOLD STANDARD)
+    // 5. GENERATE KEY (THE GOLD STANDARD)
     // ---------------------------------------------------------
     // A. Clean the filename (Security)
     const cleanFileName = filename.replace(/[^a-zA-Z0-9.-]/g, '_')
@@ -74,7 +76,7 @@ export async function POST(req: Request) {
     const key = `${targetFolder}/${user.id}/${uniqueId}-${cleanFileName}`
     // ---------------------------------------------------------
 
-    // 5. SIGN URL
+    // 6. SIGN URL
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET,
       Key: key,
