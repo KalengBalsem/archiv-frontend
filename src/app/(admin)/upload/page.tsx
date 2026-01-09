@@ -267,7 +267,7 @@ export default function AdminUploadPage() {
   }
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin mr-2"/> Verifying...</div>
-  if (!isAuthorized) return <PageContainer>Access Denied</PageContainer>
+  if (!isAuthorized) return <PageContainer>Currently, Upload is only managed by Administrator.</PageContainer>
 
   return (
     <PageContainer>

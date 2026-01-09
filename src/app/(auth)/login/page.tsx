@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -36,12 +35,17 @@ export default function LoginPage() {
       })
 
       if (signInError) {
+        // IMPROVEMENT: Handle unverified email specifically
+        if (signInError.message.includes("Email not confirmed")) {
+             setError("Please verify your email address before logging in.")
+             return
+        }
         setError(signInError.message)
         return
       }
 
-      // Successful sign-in: navigate to redirect target
       router.push(redirectTo)
+      router.refresh()
     } catch (err) {
       setError("Invalid email or password")
     } finally {
@@ -52,14 +56,11 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setError("")
     setIsLoading(true)
-
     try {
-      // This will redirect the user to Google's OAuth consent screen.
       const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
       if (error) {
         setError(error.message)
       }
-      // No router.push here; supabase will handle the redirect to Google
     } catch (err) {
       setError('Failed to start Google sign-in')
     } finally {
@@ -70,17 +71,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <Link href="/" className="block text-center mb-12">
           <h1 className="text-3xl font-bold tracking-tight text-black">ARCH-IV</h1>
         </Link>
 
-        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">Email</label>
             <Input
               id="email"
               type="email"
@@ -93,9 +90,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">Password</label>
             <Input
               id="password"
               type="password"
@@ -109,48 +104,27 @@ export default function LoginPage() {
 
           {error && <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{error}</div>}
 
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-11 bg-black hover:bg-gray-900 text-white font-medium"
-          >
+          <Button type="submit" disabled={isLoading} className="w-full h-11 bg-black hover:bg-gray-900 text-white font-medium">
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
-        {/* Divider */}
         <div className="mt-8 flex items-center gap-4">
           <div className="flex-1 border-t border-gray-300"></div>
           <span className="text-sm text-gray-500">or</span>
           <div className="flex-1 border-t border-gray-300"></div>
         </div>
 
-        {/* OAuth Buttons */}
         <div className="mt-6">
-          <Button
-            onClick={handleGoogleSignIn}
-            className="w-full h-11 border bg-white text-black hover:bg-gray-50"
-            disabled={isLoading}
-          >
+          <Button onClick={handleGoogleSignIn} className="w-full h-11 border bg-white text-black hover:bg-gray-50" disabled={isLoading}>
             {isLoading ? 'Please wait...' : 'Continue with Google'}
           </Button>
         </div>
 
-        {/* Sign Up Link */}
         <div className="mt-8 text-center">
           <p className="text-gray-600 text-sm">
-            Don't have an account?{" "}
-            <Link href="/register" className="text-black font-medium hover:underline">
-              Create one
-            </Link>
+            Don't have an account? <Link href="/register" className="text-black font-medium hover:underline">Create one</Link>
           </p>
-        </div>
-
-        {/* Forgot Password */}
-        <div className="mt-4 text-center">
-          <Link href="#" className="text-sm text-gray-500 hover:text-gray-700">
-            Forgot password?
-          </Link>
         </div>
       </div>
     </div>

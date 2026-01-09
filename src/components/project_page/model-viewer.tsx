@@ -4,7 +4,7 @@ import { Canvas, useThree } from "@react-three/fiber"
 import { 
   useGLTF, Stage, OrbitControls, Html, useProgress, 
   AdaptiveDpr, AdaptiveEvents, GizmoHelper, GizmoViewport, 
-  Grid, Bvh, Center
+  Grid, Bvh, Center, Environment
 } from "@react-three/drei"
 import { Suspense, useState, useEffect, useCallback, memo, useMemo, useRef } from "react"
 import * as THREE from "three"
@@ -56,10 +56,17 @@ const ClippingManager = memo(({ enabled, position, axis }: { enabled: boolean, p
   return null
 })
 
-const Model = memo(({ src, wireframe, onLoad }: { src: string, wireframe: boolean, onLoad: () => void }) => {
-  const { scene } = useGLTF(src)
+const Model = memo(({ src, wireframe, onLoad, onBoundsCalculated }: { src: string, wireframe: boolean, onLoad: () => void, onBoundsCalculated?: (minY: number) => void }) => {
+  // useDraco=true automatically handles Draco-compressed models
+  const { scene } = useGLTF(src, true)
   
   useEffect(() => {
+    // Calculate bounding box to find the bottom of the model
+    const box = new THREE.Box3().setFromObject(scene)
+    if (onBoundsCalculated) {
+      onBoundsCalculated(box.min.y)
+    }
+    
     scene.traverse((child) => {
       // 1. Check if it is a Mesh and cast it to THREE.Mesh
       if ((child as THREE.Mesh).isMesh) {
@@ -77,7 +84,7 @@ const Model = memo(({ src, wireframe, onLoad }: { src: string, wireframe: boolea
       }
     })
     onLoad()
-  }, [scene, wireframe, onLoad])
+  }, [scene, wireframe, onLoad, onBoundsCalculated])
 
   return <primitive object={scene} />
 })
@@ -99,14 +106,24 @@ const CameraHandler = memo(({ ortho, controlsRef }: { ortho: boolean, controlsRe
 // ============================================
 
 const Loader = () => {
-  const { progress } = useProgress()
+  const { progress, active, item } = useProgress()
   return (
     <Html center className="z-50">
-      <div className="flex flex-col items-center gap-2 bg-white/80 dark:bg-black/80 p-4 rounded-xl backdrop-blur-md">
-        <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+      <div className="flex flex-col items-center gap-3 bg-white/90 dark:bg-black/90 p-6 rounded-2xl backdrop-blur-md shadow-xl min-w-[200px]">
+        <div className="w-40 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out" 
+            style={{ width: `${progress}%` }} 
+          />
         </div>
-        <span className="text-xs font-mono text-gray-500">{Math.round(progress)}%</span>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+            {Math.round(progress)}%
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
+            {active ? "Loading model..." : "Preparing..."}
+          </span>
+        </div>
       </div>
     </Html>
   )
@@ -130,6 +147,7 @@ export default function ModelViewer({ src, poster, className, showControls = tru
   const controlsRef = useRef<any>(null)
   const [loaded, setLoaded] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [gridY, setGridY] = useState(0) // Dynamic grid Y position based on model bounds
   
   // Consolidated State
   const [config, setConfig] = useState({
@@ -234,19 +252,40 @@ export default function ModelViewer({ src, poster, className, showControls = tru
         gl={{ preserveDrawingBuffer: true, localClippingEnabled: true }}
       >
         <Suspense fallback={<Loader />}>
-          {/* Stage handles Environment + Lighting + Centering automatically */}
-          <Stage 
-            intensity={0.5} 
-            environment="city" 
-            adjustCamera={!loaded} // Only adjust camera on initial load
-            shadows={{ type: 'accumulative', bias: -0.001 }}
-          >
+          {/* Model centered on X/Z axes */}
+          <Center disableY>
             <Bvh firstHitOnly>
-              <Model src={src} wireframe={config.wireframe} onLoad={() => setLoaded(true)} />
+              <Model 
+                src={src} 
+                wireframe={config.wireframe} 
+                onLoad={() => setLoaded(true)} 
+                onBoundsCalculated={(minY) => setGridY(minY - 0.001)}
+              />
             </Bvh>
-          </Stage>
-
-          {config.grid && <Grid args={[10, 10]} cellColor="#888" sectionColor="#444" position={[0, -0.01, 0]} infiniteGrid fadeDistance={20} />}
+          </Center>
+          
+          {/* Lightweight environment - "apartment" is smaller than "city" */}
+          <Environment preset="apartment" />
+          
+          {/* Simple lighting instead of Stage's heavy setup */}
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[5, 5, 5]} intensity={0.6} castShadow={!isMobile} />
+          
+          {config.grid && (
+            <Grid 
+              args={[100, 100]} 
+              cellSize={0.5}
+              cellThickness={0.5}
+              cellColor="#6b7280"   
+              sectionSize={2}
+              sectionThickness={1}
+              sectionColor="#374151" 
+              position={[0, gridY, 0]} 
+              fadeDistance={50}
+              fadeStrength={1}
+              followCamera={false}
+            />
+          )}
           
           <ClippingManager enabled={config.section} position={config.clipPos} axis={config.clipAxis} />
           
@@ -273,5 +312,5 @@ export default function ModelViewer({ src, poster, className, showControls = tru
   )
 }
 
-// Preload
-useGLTF.preload = (src: string) => useGLTF.preload(src)
+// Preload helper - call this on hover or before navigation
+export const preloadModel = (src: string) => useGLTF.preload(src, true)
