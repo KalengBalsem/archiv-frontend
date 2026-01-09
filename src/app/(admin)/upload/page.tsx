@@ -267,7 +267,14 @@ export default function AdminUploadPage() {
   }
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin mr-2"/> Verifying...</div>
-  if (!isAuthorized) return <PageContainer>Currently, Upload is only managed by Administrator.</PageContainer>
+  if (!isAuthorized) return (
+    <PageContainer>
+        <p>Currently, Upload is only managed by Administrator.</p><br/>
+        <p>Submit your work here to be curated and published by Admin: <a href="https://forms.gle/ujWFakRtATgrbNSE6" className="underline">ARCH-IV Submission Form Link</a></p>
+    </PageContainer>
+
+  )
+
 
   return (
     <PageContainer>

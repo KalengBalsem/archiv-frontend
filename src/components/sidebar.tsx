@@ -30,12 +30,10 @@
   import { supabaseClient } from "@/utils/supabaseClient";
 
   import {
-    IconBell,
-    IconChevronRight,
     IconChevronsDown,
-    IconCreditCard,
     IconLogout,
     IconUserCircle,
+    IconInfoCircle,
   } from "@tabler/icons-react";
 
   import { useUserData } from "@/hooks/use-user-data";
@@ -57,9 +55,9 @@
       icon: "add",
     },
     {
-      title: "About",
+      title: "About ARCH-IV",
       url: "/about",
-      icon: "info-circle",
+      icon: "info",
     },
   ];
 
@@ -98,7 +96,9 @@
             {/* <SidebarGroupLabel>Overview</SidebarGroupLabel> */}
             <SidebarMenu>
               {navItems.map((item) => {
-                const Icon = item.icon ? Icons[item.icon as keyof typeof Icons] : Icons.logo;
+                const Icon = item.icon === "info" 
+                    ? IconInfoCircle 
+                    : (item.icon ? Icons[item.icon as keyof typeof Icons] : Icons.logo);
                 const isParentActive =
                   pathname === item.url;
 

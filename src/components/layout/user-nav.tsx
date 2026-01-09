@@ -69,8 +69,8 @@ export function UserNav() {
           <DropdownMenuItem onClick={() => router.push('/profile')}>
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>Billing</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
+          {/* <DropdownMenuItem>Billing</DropdownMenuItem>
+          <DropdownMenuItem>Settings</DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

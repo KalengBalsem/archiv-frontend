@@ -13,7 +13,7 @@ const robotoMono = Roboto_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Archive 3D - Architectural Model Archive",
+  title: "ARCH-IV - Architectural Archive",
   description: "A clean, modern archive for 3D architectural models",
 }
 

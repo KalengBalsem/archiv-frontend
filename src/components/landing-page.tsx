@@ -161,7 +161,7 @@ export default function ArchIvLanding() {
 
             <p className="text-sm md:text-base max-w-md mx-auto text-neutral-500 leading-relaxed">
               The central repository for student architectural works. 
-              Storing raw 3D assets, 2D technical drawings, and project metadata in a unified whitelist-only ecosystem.
+              Storing raw 3D assets, 2D technical drawings, and project metadata.
             </p>
 
             {/* Whitelist Form

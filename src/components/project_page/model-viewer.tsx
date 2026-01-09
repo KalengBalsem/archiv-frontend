@@ -185,7 +185,7 @@ export default function ModelViewer({ src, poster, className, showControls = tru
             <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
               <div className="flex gap-2">
                 <ControlBtn onClick={() => toggle('section')} active={config.section} title="Section"><Icons.Section /></ControlBtn>
-                <ControlBtn onClick={() => toggle('wireframe')} active={config.wireframe} title="Wireframe"><Icons.Wireframe /></ControlBtn>
+                {/* <ControlBtn onClick={() => toggle('wireframe')} active={config.wireframe} title="Wireframe"><Icons.Wireframe /></ControlBtn> */}
                 <ControlBtn onClick={() => toggle('grid')} active={config.grid} title="Grid"><Icons.Grid /></ControlBtn>
                 <ControlBtn onClick={() => toggle('ortho')} active={config.ortho} title="Ortho"><Icons.Ortho /></ControlBtn>
               </div>
