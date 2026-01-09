@@ -164,7 +164,7 @@ export default function ArchIvLanding() {
               Storing raw 3D assets, 2D technical drawings, and project metadata in a unified whitelist-only ecosystem.
             </p>
 
-            {/* Whitelist Form */}
+            {/* Whitelist Form
             <div className="max-w-md mx-auto w-full">
               {status === 'success' ? (
                 <div className="p-4 border border-neutral-900 bg-neutral-50 text-center animate-in fade-in slide-in-from-bottom-2">
@@ -195,7 +195,7 @@ export default function ArchIvLanding() {
               <p className="text-[10px] text-neutral-400 mt-4 text-center uppercase tracking-wider">
                 compounds design knowledge.
               </p>
-            </div>
+            </div> */}
           </div>
 
           <div className="absolute bottom-8 animate-bounce hidden md:block">
