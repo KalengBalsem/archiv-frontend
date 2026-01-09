@@ -2,6 +2,9 @@ import Image from "next/image"
 import type { Metadata } from "next"
 import { supabaseClient } from '@/utils/supabaseClient'
 
+// Force dynamic rendering - fetch fresh stats on every request
+export const dynamic = 'force-dynamic'
+
 async function getArchiveStats() {
   // Fetch only necessary columns to keep it fast
   const { data, count } = await supabaseClient
