@@ -59,10 +59,6 @@ export default async function AboutPage() {
         {/* -------------------------------- */}
 
       <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-        <p className="text-xl font-light text-gray-500 mb-8 border-l-4 border-black pl-4">
-          "Building design knowledge is lost every semester. ARCH-IV exists to stop that leak."
-        </p>
-
         <p>
           ARCH-IV is a <strong>Design Intelligence Network</strong>. 
           While scientific research lives on forever in journals, architectural design often disappears 
@@ -94,7 +90,7 @@ export default async function AboutPage() {
           the platform's future.
         </p>
         <br/>
-        <p>This is just the beginning of better future building design & engineering.</p>
+        <p>This is just the beginning of a better building design & engineering future.</p>
       </div>
       </div>
     </main>
