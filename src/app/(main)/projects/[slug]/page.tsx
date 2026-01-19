@@ -140,58 +140,67 @@ export default function ProjectDetailPage() {
         
         {/* Left Column: 3D Viewer / Image */}
         <div className="lg:col-span-2">
-          {project.gltf_url ? (
-            <div className="bg-gray-100 rounded-xl aspect-[4/3] overflow-hidden border shadow-sm relative">
-              {/* View Mode Toggle */}
-              <div className="absolute top-3 left-3 z-30 flex bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-1 shadow-md border border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => setViewMode('image')}
-                  className={`
-                    flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                    ${viewMode === 'image' 
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' 
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }
-                  `}
-                  title="View Image"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">Image</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('3d')}
-                  className={`
-                    flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                    ${viewMode === '3d' 
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' 
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }
-                  `}
-                  title="View 3D Model"
-                >
-                  <Box className="w-4 h-4" />
-                  <span className="hidden sm:inline">3D</span>
-                </button>
-              </div>
+          <div className="bg-gray-100 rounded-xl aspect-[4/3] overflow-hidden border shadow-sm relative">
+            {/* View Mode Toggle */}
+            <div className="absolute top-3 left-3 z-30 flex bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-1 shadow-md border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setViewMode('image')}
+                className={`
+                  flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                  ${viewMode === 'image' 
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' 
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }
+                `}
+                title="View Image"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Image</span>
+              </button>
+              <button
+                onClick={() => setViewMode('3d')}
+                className={`
+                  flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                  ${viewMode === '3d' 
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-sm' 
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }
+                `}
+                title="View 3D Model"
+              >
+                <Box className="w-4 h-4" />
+                <span className="hidden sm:inline">3D</span>
+              </button>
+            </div>
 
-              {/* Content based on view mode */}
-              {viewMode === '3d' ? (
+            {/* Content based on view mode */}
+            {viewMode === '3d' ? (
+              project.gltf_url ? (
                 <ModelViewer 
                   src={getSafeUrl(project.gltf_url)} 
                   poster={getSafeUrl(project.thumbnail_url)} 
                   className="w-full h-full" 
                 />
               ) : (
-                <div className="w-full h-full relative">
-                  <Image
-                    src={getSafeUrl(project.thumbnail_url) || "/placeholder.svg"}
-                    alt={project.title || "Project thumbnail"}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                    className="object-cover"
-                    priority
-                  />
-                  {/* Click to load 3D hint */}
+                <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                  <div className="text-center text-gray-400">
+                    <Box className="h-8 w-8 mx-auto mb-4" />
+                    <p className="text-lg font-medium">No 3D Model</p>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="w-full h-full relative">
+                <Image
+                  src={getSafeUrl(project.thumbnail_url) || "/placeholder.svg"}
+                  alt={project.title || "Project thumbnail"}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  className="object-cover"
+                  priority
+                />
+                {/* Click to load 3D hint - only show if 3D model exists */}
+                {project.gltf_url && (
                   <button 
                     onClick={() => setViewMode('3d')}
                     className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors group"
@@ -201,17 +210,10 @@ export default function ProjectDetailPage() {
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Click to load 3D</span>
                     </div>
                   </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-xl aspect-[4/3] flex items-center justify-center border-2 border-dashed border-gray-200">
-              <div className="text-center text-gray-400">
-                <ExternalLink className="h-8 w-8 mx-auto mb-4" />
-                <p className="text-lg font-medium">No 3D Model</p>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Right Column: Project Details */}
