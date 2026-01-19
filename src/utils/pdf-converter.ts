@@ -1,6 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Konfigurasi Worker PDF.js untuk Next.js
+// Pastikan versi pdfjs-dist di package.json cocok dengan worker ini.
 if (typeof window !== 'undefined' && 'Worker' in window) {
   (pdfjsLib.GlobalWorkerOptions as any).workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 }
@@ -12,7 +13,7 @@ if (typeof window !== 'undefined' && 'Worker' in window) {
 interface PdfConfig {
   targetDPI: number;      // 150 DPI = Cukup tajam untuk baca dimensi denah
   maxMegapixels: number;  // 16 MP = Batas aman agar browser HP tidak crash
-  quality: number;        // 0.8 = Kualitas WebP optimal (teks tajam, putih bersih)
+  quality: number;        // 0.8 = Kualitas WebP optimal
   format: string;         // 'image/webp'
 }
 
@@ -25,7 +26,7 @@ const CONFIG: PdfConfig = {
 
 export const convertPdfToImages = async (
   file: File,
-  onProgress?: (current: number, total: number) => void // Opsional: Untuk Loading Bar
+  onProgress?: (current: number, total: number) => void
 ): Promise<File[]> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -37,12 +38,11 @@ export const convertPdfToImages = async (
 
     for (let i = 1; i <= totalPages; i++) {
       
-      // [FIX 1: ANTI-LAG]
-      // Beri jeda 0 detik agar Main Thread browser sempat bernapas/render UI
-      // Ini mencegah pesan "Page Unresponsive" saat convert file besar.
+      // [FIX 1: ANTI-FREEZE]
+      // Beri jeda agar UI tidak macet saat render file besar
       await new Promise(resolve => setTimeout(resolve, 0));
 
-      // Update progress jika ada callback
+      // Update progress bar
       if (onProgress) onProgress(i, totalPages);
 
       const page = await pdf.getPage(i);
@@ -50,15 +50,14 @@ export const convertPdfToImages = async (
       // --- SMART SCALING LOGIC ---
       const defaultViewport = page.getViewport({ scale: 1.0 });
       
-      // Hitung scale target (misal dari 72 DPI ke 150 DPI)
+      // Hitung scale target (72 DPI -> 150 DPI)
       let scale = CONFIG.targetDPI / 72;
       
-      // Cek apakah hasil gambar akan terlalu raksasa (bahaya crash)
+      // Cek limit memori agar tidak crash di HP
       let width = defaultViewport.width * scale;
       let height = defaultViewport.height * scale;
       let megaPixels = (width * height) / 1_000_000;
 
-      // Jika melebihi batas aman (misal poster A0), kecilkan otomatis
       if (megaPixels > CONFIG.maxMegapixels) {
         const reduction = Math.sqrt(CONFIG.maxMegapixels / megaPixels);
         scale = scale * reduction;
@@ -66,19 +65,38 @@ export const convertPdfToImages = async (
 
       const viewport = page.getViewport({ scale });
 
-      // --- RENDER ---
+      // --- RENDER (FIXED) ---
       const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d', { alpha: false });
+      
+      // [FIX 2: SOFTWARE RENDERING]
+      // 'willReadFrequently: true' adalah kunci untuk mengatasi GPU Glitch (Layar Hitam)
+      // pada gambar vektor arsitektur yang sangat detail/berat.
+      const context = canvas.getContext('2d', { 
+        alpha: false, 
+        willReadFrequently: true 
+      });
 
       if (!context) continue;
 
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
-      await page.render({ 
-        canvasContext: context, 
-        viewport: viewport 
-      } as any).promise;
+      // [FIX 3: WHITE PAPER BASE]
+      // Wajib: Isi canvas dengan cat putih sebelum render PDF.
+      // Ini mengatasi PDF transparan yang terlihat hitam di browser.
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      // [FIX 4: PRINT INTENT]
+      // Mode 'print' memaksa browser meratakan transparansi (flattening).
+      // Sangat ampuh untuk file export Revit/InDesign yang punya layer aneh.
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport,
+        intent: 'print' 
+      };
+
+      await page.render(renderContext as any).promise;
 
       // --- KOMPRESI ---
       const blob = await new Promise<Blob | null>((resolve) => 
@@ -86,13 +104,11 @@ export const convertPdfToImages = async (
       );
 
       if (blob) {
-        // [FIX 2: FILENAME & EXTENSION]
-        // 1. Bersihkan nama file dari karakter aneh
+        // Bersihkan nama file
         const cleanName = file.name
-          .replace(/\.[^/.]+$/, "")     // Buang ekstensi lama (.pdf)
-          .replace(/[^a-zA-Z0-9-_]/g, "_"); // Ganti spasi/simbol dengan _
+          .replace(/\.[^/.]+$/, "")     
+          .replace(/[^a-zA-Z0-9-_]/g, "_"); 
         
-        // 2. PASTIkan ekstensi .webp tertulis eksplisit
         const newFileName = `${cleanName}_p${i}.webp`; 
         
         const optimizedFile = new File([blob], newFileName, { 
@@ -103,7 +119,7 @@ export const convertPdfToImages = async (
         imageFiles.push(optimizedFile);
       }
 
-      // Bersihkan memori per halaman
+      // Bersihkan memori (Penting untuk file berhalaman banyak)
       page.cleanup();
       canvas.remove();
     }
@@ -112,6 +128,6 @@ export const convertPdfToImages = async (
 
   } catch (error) {
     console.error("ARCH-IV Conversion Error:", error);
-    throw new Error("Gagal memproses PDF. File mungkin rusak atau terproteksi password.");
+    throw new Error("Gagal memproses PDF. Pastikan file tidak rusak.");
   }
 };
