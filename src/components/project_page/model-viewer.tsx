@@ -56,15 +56,28 @@ const ClippingManager = memo(({ enabled, position, axis }: { enabled: boolean, p
   return null
 })
 
-const Model = memo(({ src, wireframe, onLoad, onBoundsCalculated }: { src: string, wireframe: boolean, onLoad: () => void, onBoundsCalculated?: (minY: number) => void }) => {
+interface ModelBounds {
+  min: { x: number; y: number; z: number }
+  max: { x: number; y: number; z: number }
+}
+
+const Model = memo(({ src, wireframe, onLoad, onBoundsCalculated }: { 
+  src: string, 
+  wireframe: boolean, 
+  onLoad: () => void, 
+  onBoundsCalculated?: (bounds: ModelBounds) => void 
+}) => {
   // useDraco=true automatically handles Draco-compressed models
   const { scene } = useGLTF(src, true)
   
   useEffect(() => {
-    // Calculate bounding box to find the bottom of the model
+    // Calculate bounding box for the model
     const box = new THREE.Box3().setFromObject(scene)
     if (onBoundsCalculated) {
-      onBoundsCalculated(box.min.y)
+      onBoundsCalculated({
+        min: { x: box.min.x, y: box.min.y, z: box.min.z },
+        max: { x: box.max.x, y: box.max.y, z: box.max.z }
+      })
     }
     
     scene.traverse((child) => {
@@ -147,7 +160,7 @@ export default function ModelViewer({ src, poster, className, showControls = tru
   const controlsRef = useRef<any>(null)
   const [loaded, setLoaded] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [gridY, setGridY] = useState(0) // Dynamic grid Y position based on model bounds
+  const [modelBounds, setModelBounds] = useState<ModelBounds | null>(null)
   
   // Consolidated State
   const [config, setConfig] = useState({
@@ -156,11 +169,32 @@ export default function ModelViewer({ src, poster, className, showControls = tru
     autoRotate: false,
     ortho: false,
     section: false,
-    clipPos: 0,
+    clipPercent: 100, // 0-100 percentage through the model
     clipAxis: 'y' as 'x'|'y'|'z'
   })
 
+  // Calculate actual clip position from percentage and bounds
+  const clipPosition = useMemo(() => {
+    if (!modelBounds) return 0
+    const axis = config.clipAxis
+    const min = modelBounds.min[axis]
+    const max = modelBounds.max[axis]
+    // Map 0-100% to min-max with small padding
+    const padding = (max - min) * 0.05
+    return min - padding + ((max - min + padding * 2) * config.clipPercent / 100)
+  }, [modelBounds, config.clipPercent, config.clipAxis])
+
+  // Grid Y position based on model bounds
+  const gridY = useMemo(() => {
+    return modelBounds ? modelBounds.min.y - 0.001 : 0
+  }, [modelBounds])
+
   const toggle = (k: keyof typeof config) => setConfig(p => ({ ...p, [k]: !p[k] }))
+  
+  // Reset clip percent when axis changes
+  const handleAxisChange = (axis: 'x'|'y'|'z') => {
+    setConfig(p => ({ ...p, clipAxis: axis, clipPercent: 100 }))
+  }
   
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) containerRef.current?.requestFullscreen()
@@ -230,13 +264,28 @@ export default function ModelViewer({ src, poster, className, showControls = tru
                 <span className="text-xs font-bold uppercase text-gray-500">Slice Axis</span>
                 <div className="flex gap-1">
                   {(['x', 'y', 'z'] as const).map(axis => (
-                    <button key={axis} onClick={() => setConfig(p => ({ ...p, clipAxis: axis }))} className={`px-3 py-1 text-xs rounded-md font-bold ${config.clipAxis === axis ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                    <button key={axis} onClick={() => handleAxisChange(axis)} className={`px-3 py-1 text-xs rounded-md font-bold ${config.clipAxis === axis ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
                       {axis.toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
-              <input type="range" min="-5" max="5" step="0.1" value={config.clipPos} onChange={(e) => setConfig(p => ({ ...p, clipPos: parseFloat(e.target.value) }))} className="w-full accent-blue-500 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>0%</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{Math.round(config.clipPercent)}%</span>
+                  <span>100%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  step="1" 
+                  value={config.clipPercent} 
+                  onChange={(e) => setConfig(p => ({ ...p, clipPercent: parseFloat(e.target.value) }))} 
+                  className="w-full accent-blue-500 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
+                />
+              </div>
             </div>
           )}
         </>
@@ -259,7 +308,7 @@ export default function ModelViewer({ src, poster, className, showControls = tru
                 src={src} 
                 wireframe={config.wireframe} 
                 onLoad={() => setLoaded(true)} 
-                onBoundsCalculated={(minY) => setGridY(minY - 0.001)}
+                onBoundsCalculated={(bounds) => setModelBounds(bounds)}
               />
             </Bvh>
           </Center>
@@ -287,7 +336,7 @@ export default function ModelViewer({ src, poster, className, showControls = tru
             />
           )}
           
-          <ClippingManager enabled={config.section} position={config.clipPos} axis={config.clipAxis} />
+          <ClippingManager enabled={config.section} position={clipPosition} axis={config.clipAxis} />
           
           <OrbitControls 
             ref={controlsRef} 
