@@ -45,6 +45,10 @@ export default function AdminUploadPage() {
   const [tempContributorName, setTempContributorName] = useState("")
   const [tempContributorRole, setTempContributorRole] = useState("Team Member")
 
+  // [NEW] State for Adding New Tags
+  const [newTagName, setNewTagName] = useState("")
+  const [isAddingTag, setIsAddingTag] = useState(false)
+
   // Options
   const [options, setOptions] = useState<{
     users: OptionItem[], typologies: OptionItem[], licenses: OptionItem[], software: OptionItem[], tags: OptionItem[], locations: OptionItem[]
@@ -132,6 +136,58 @@ export default function AdminUploadPage() {
 
   const removeManualContributor = (index: number) => {
     setManualContributors(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // [NEW] Add New Tag Handler
+  const handleAddNewTag = async () => {
+    const trimmedName = newTagName.trim()
+    if (!trimmedName) return
+    
+    // Check if tag already exists (case-insensitive)
+    const exists = options.tags.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())
+    if (exists) {
+      alert("This tag already exists!")
+      return
+    }
+
+    setIsAddingTag(true)
+    try {
+      const { data, error } = await supabaseClient
+        .from('tags')
+        .insert({ name: trimmedName })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Immediately update the local tags list
+      setOptions(prev => ({
+        ...prev,
+        tags: [...prev.tags, { id: data.id, name: data.name }]
+      }))
+      
+      // Auto-select the new tag
+      setSelections(prev => ({
+        ...prev,
+        tags: [...prev.tags, data.id]
+      }))
+
+      setNewTagName("")
+    } catch (err: any) {
+      alert("Failed to add tag: " + err.message)
+    } finally {
+      setIsAddingTag(false)
+    }
+  }
+
+  // [NEW] Refresh Tags from Database
+  const refreshTags = async () => {
+    try {
+      const { data } = await supabaseClient.from('tags').select('id, name')
+      setOptions(prev => ({ ...prev, tags: data || [] }))
+    } catch (err) {
+      console.error("Failed to refresh tags:", err)
+    }
   }
 
   // --- FILE HANDLING ---
@@ -426,7 +482,38 @@ export default function AdminUploadPage() {
             <div className="space-y-4">
                 <h3 className="font-medium border-b pb-2">Context</h3>
                 <div>
-                    <label className="text-sm font-medium block mb-2">Tags</label>
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium">Tags</label>
+                        <button 
+                            type="button" 
+                            onClick={refreshTags} 
+                            className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                        >
+                            <RefreshCw className="w-3 h-3" /> Refresh
+                        </button>
+                    </div>
+                    
+                    {/* Add New Tag Input */}
+                    <div className="flex gap-2 mb-3">
+                        <Input 
+                            placeholder="Add new tag..." 
+                            value={newTagName}
+                            onChange={(e) => setNewTagName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewTag())}
+                            className="flex-1 h-8 text-sm"
+                        />
+                        <Button 
+                            type="button" 
+                            onClick={handleAddNewTag} 
+                            disabled={isAddingTag || !newTagName.trim()}
+                            size="sm" 
+                            className="h-8 px-3 bg-black hover:bg-gray-800"
+                        >
+                            {isAddingTag ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                        </Button>
+                    </div>
+
+                    {/* Tags List */}
                     <div className="flex flex-wrap gap-2">
                         {options.tags.map(t => (
                             <button type="button" key={t.id} onClick={() => toggleSelection('tags', t.id)}

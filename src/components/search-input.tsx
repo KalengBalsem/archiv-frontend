@@ -108,6 +108,9 @@ export default function SearchInput() {
   const currentTags = searchParams.get("tags")?.split(",").filter(Boolean) || []
   const currentSoftware = searchParams.get("software")?.split(",").filter(Boolean) || []
 
+  // Check if we're on the projects page
+  const isProjectsPage = pathname === "/projects"
+
   // Count active filters
   const activeFilterCount = [
     currentTypology !== "all" ? 1 : 0,
@@ -115,6 +118,9 @@ export default function SearchInput() {
     currentTags.length,
     currentSoftware.length,
   ].reduce((a, b) => a + b, 0)
+
+  // Helper to get target path (redirect to /projects if not already there)
+  const getTargetPath = () => isProjectsPage ? pathname : "/projects"
 
   // Helper to update single-select filters
   const updateFilter = (key: string, value: string) => {
@@ -126,7 +132,7 @@ export default function SearchInput() {
       params.delete(key)
     }
 
-    router.push(`${pathname}?${params.toString()}`)
+    router.push(`${getTargetPath()}?${params.toString()}`)
   }
 
   // Helper to update multi-select filters (tags, software)
@@ -146,7 +152,7 @@ export default function SearchInput() {
       params.delete(key)
     }
 
-    router.push(`${pathname}?${params.toString()}`)
+    router.push(`${getTargetPath()}?${params.toString()}`)
   }
 
   // Clear all filters
@@ -154,7 +160,7 @@ export default function SearchInput() {
     const params = new URLSearchParams()
     // Keep search query if exists
     if (urlQuery) params.set("q", urlQuery)
-    router.push(`${pathname}?${params.toString()}`)
+    router.push(`${getTargetPath()}?${params.toString()}`)
   }
 
   return (
