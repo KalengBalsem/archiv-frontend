@@ -257,7 +257,7 @@ export default function AdminUploadPage() {
         ]
         
         await Promise.all(batchOps)
-        router.push(`/project/${project.id}`)
+        router.push(`/project/${project.slug}`)
 
     } catch (err: any) {
         alert(err.message)

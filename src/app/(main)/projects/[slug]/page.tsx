@@ -61,6 +61,13 @@ export default function ProjectDetailPage() {
               software: software (name, vendor)
             ),
             
+            project_contributors (
+              id,
+              name,
+              role,
+              user: users (full_name, username, avatar_url)
+            ),
+            
             author_name
           `)
           .eq("slug", slug)
@@ -80,7 +87,16 @@ export default function ProjectDetailPage() {
           tags: data.project_tags?.map((item: any) => ({ tag: item.tag })) || [],
           
           // [FIX] Flatten Software Relation
-          software: data.project_software?.map((item: any) => item.software) || []
+          software: data.project_software?.map((item: any) => item.software) || [],
+          
+          // [FIX] Flatten Contributors Relation
+          contributors: data.project_contributors?.map((item: any) => ({
+            id: item.id,
+            name: item.user?.full_name || item.name,
+            role: item.role,
+            username: item.user?.username,
+            avatar_url: item.user?.avatar_url
+          })) || []
         };
 
         // Sort images
@@ -220,7 +236,7 @@ export default function ProjectDetailPage() {
         <div className="lg:col-span-1 space-y-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{project.title}</h1>
-              <p className="text-gray-600 leading-relaxed">{project.description}</p>
+              <p className="text-gray-600 leading-relaxed text-sm">{project.description}</p>
             </div>
             
             <div className="space-y-6 pt-6 border-t border-gray-100">
@@ -288,6 +304,16 @@ export default function ProjectDetailPage() {
                     {project.user?.full_name || project.author_name || "Unknown Architect"}
                   </dd>
                 </div>
+
+                {/* 6.5 CONTRIBUTORS */}
+                {project.contributors && project.contributors.length > 0 && (
+                  <div>
+                    <dt className="text-xs font-medium text-gray-500 uppercase">Contributors</dt>
+                    <dd className="mt-1 text-base font-medium text-gray-900">
+                      {project.contributors.map((c: any) => c.name).join(', ')}
+                    </dd>
+                  </div>  
+                )}
 
                 {/* 7. LICENSE */}
                 {project.license && (
