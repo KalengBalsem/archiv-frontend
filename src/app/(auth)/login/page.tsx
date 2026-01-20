@@ -57,7 +57,7 @@ export default function LoginPage() {
     setError("")
     setIsLoading(true)
     try {
-      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo : `${window.location.origin}/auth/callback?next=/projects` } })
       if (error) {
         setError(error.message)
       }

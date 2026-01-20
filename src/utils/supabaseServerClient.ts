@@ -1,16 +1,14 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+// utils/supabaseServerClient.ts
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies()
 
-  // Prefer a server-only service role key for server-side operations that need elevated DB privileges.
-  // IMPORTANT: Never expose the SERVICE_ROLE key to the browser or commit it to source control.
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    supabaseKey,
+    // ALWAYS use the Anon Key for user operations to ensure RLS works
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, 
     {
       cookies: {
         getAll() {
@@ -22,7 +20,8 @@ export async function createSupabaseServerClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Called in a context where cookies are read-only (like a Server Component render)
+            // This ignores errors in Server Components (where cookies are read-only)
+            // But works perfectly in Route Handlers (like your Auth Callback)
           }
         },
       },
