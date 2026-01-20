@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Roboto_Mono } from 'next/font/google';
-import { ArrowRight, Box, Layers, FileJson, Maximize2, ChevronDown, LucideIcon } from 'lucide-react';
+import { ArrowRight, Box, Layers, FileJson, Maximize2, ChevronDown, LucideIcon, Play } from 'lucide-react';
+import Link from 'next/link';
 
 import { supabaseClient } from '@/utils/supabaseClient'; // Ensure it's a named export, otherwise use default
 
@@ -164,6 +165,23 @@ export default function ArchIvLanding() {
               Storing raw 3D assets, 2D technical drawings, and project metadata.
             </p>
 
+            {/* CTA Button */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+              <Link 
+                href="/projects"
+                className="group bg-neutral-900 text-white px-8 py-4 text-sm font-medium hover:bg-neutral-700 active:bg-black transition-all flex items-center gap-3"
+              >
+                ENTER ARCHIVE
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link 
+                href="/register"
+                className="border border-neutral-300 px-8 py-4 text-sm font-medium hover:border-neutral-900 hover:bg-neutral-50 transition-all"
+              >
+                SIGN UP
+              </Link>
+            </div>
+
             {/* Whitelist Form
             <div className="max-w-md mx-auto w-full">
               {status === 'success' ? (
@@ -203,6 +221,52 @@ export default function ArchIvLanding() {
           </div>
         </section>
 
+        {/* Site Preview Section */}
+        <section className="py-16 md:py-24 px-6 border-b border-neutral-200 bg-white">
+          <div className="max-w-6xl mx-auto">
+            {/* Browser Mockup */}
+            <div className="relative group">
+              {/* Browser Chrome */}
+              <div className="bg-neutral-100 border border-neutral-200 rounded-t-lg px-4 py-3 flex items-center gap-3">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-neutral-300"></div>
+                  <div className="w-3 h-3 rounded-full bg-neutral-300"></div>
+                  <div className="w-3 h-3 rounded-full bg-neutral-300"></div>
+                </div>
+                <div className="flex-1 flex justify-center">
+                  <div className="bg-white border border-neutral-200 rounded px-4 py-1 text-xs text-neutral-400 font-mono w-64 text-center">
+                    archiv.tech/projects
+                  </div>
+                </div>
+              </div>
+              
+              {/* Preview Image */}
+              <div className="border border-t-0 border-neutral-200 rounded-b-lg overflow-hidden">
+                <img 
+                  src="https://assets.archiv.tech/achiv_preview.png" 
+                  alt="ARCH-IV Interface Preview" 
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-neutral-900/0 group-hover:bg-neutral-900/5 transition-colors rounded-lg pointer-events-none"></div>
+            </div>
+            
+            {/* CTA below preview */}
+            <div className="text-center mt-10">
+              <Link 
+                href="/projects"
+                className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 hover:underline underline-offset-4 group"
+              >
+                <Play className="w-4 h-4" />
+                Explore the Archive
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Data Grid Section */}
         <section className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-200 border-b border-neutral-200 bg-white">
           <FeatureCard 
@@ -231,7 +295,7 @@ export default function ArchIvLanding() {
             <div className="space-y-2">
                <h4 className="text-sm font-bold uppercase tracking-wider">Supported Formats</h4>
                <div className="flex flex-wrap gap-2 max-w-sm">
-                 {['.SKP', '.3DM', '.RVT', '.DWG', '.GLB', '.PDF', '.IFC'].map((ext) => (
+                 {['.SKP', '.3DM', '.RVT', '.IFC', '.GLB', '.PDF'].map((ext) => (
                    <span key={ext} className="text-xs border border-neutral-200 px-2 py-1 text-neutral-500">
                      {ext}
                    </span>
