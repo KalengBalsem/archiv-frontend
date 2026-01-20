@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -35,6 +35,30 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null)
   const [viewMode, setViewMode] = useState<'3d' | 'image'>('image') // Default to image for performance
+  
+  // Track if view has been counted to prevent double-counting
+  const viewTracked = useRef(false)
+
+  // Track view on page load (separate effect to avoid re-triggering)
+  useEffect(() => {
+    if (!slug || viewTracked.current) return
+    
+    const trackView = async () => {
+      try {
+        viewTracked.current = true
+        await fetch("/api/views", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug }),
+        })
+      } catch (error) {
+        // Silently fail - view tracking shouldn't break the page
+        console.error("Failed to track view:", error)
+      }
+    }
+    
+    trackView()
+  }, [slug])
 
   useEffect(() => {
     if (!slug) return;
