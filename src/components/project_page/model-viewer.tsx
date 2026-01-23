@@ -2,7 +2,7 @@
 
 import { Canvas, useThree } from "@react-three/fiber"
 import { 
-  useGLTF, Stage, OrbitControls, Html, useProgress, 
+  useGLTF, OrbitControls, Html, 
   AdaptiveDpr, AdaptiveEvents, GizmoHelper, GizmoViewport, 
   Grid, Bvh, Center, Environment
 } from "@react-three/drei"
@@ -119,7 +119,36 @@ const CameraHandler = memo(({ ortho, controlsRef }: { ortho: boolean, controlsRe
 // ============================================
 
 const Loader = () => {
-  const { progress, active, item } = useProgress()
+  const [progress, setProgress] = useState(0)
+  const [active, setActive] = useState(true)
+  
+  useEffect(() => {
+    // Use a manual subscription to avoid the setState-during-render issue
+    // Defer state updates to avoid React concurrent mode issues
+    const handleStart = () => {
+      queueMicrotask(() => setActive(true))
+    }
+    const handleProgress = (_url: string, loaded: number, total: number) => {
+      queueMicrotask(() => setProgress((loaded / total) * 100))
+    }
+    const handleLoad = () => {
+      queueMicrotask(() => {
+        setProgress(100)
+        setActive(false)
+      })
+    }
+    
+    THREE.DefaultLoadingManager.onStart = handleStart
+    THREE.DefaultLoadingManager.onProgress = handleProgress
+    THREE.DefaultLoadingManager.onLoad = handleLoad
+    
+    return () => {
+      THREE.DefaultLoadingManager.onStart = () => {}
+      THREE.DefaultLoadingManager.onProgress = () => {}
+      THREE.DefaultLoadingManager.onLoad = () => {}
+    }
+  }, [])
+  
   return (
     <Html center className="z-50">
       <div className="flex flex-col items-center gap-3 bg-white/90 dark:bg-black/90 p-6 rounded-2xl backdrop-blur-md shadow-xl min-w-[200px]">
@@ -200,6 +229,16 @@ export default function ModelViewer({ src, poster, className, showControls = tru
     if (!document.fullscreenElement) containerRef.current?.requestFullscreen()
     else document.exitFullscreen()
   }
+
+  // Cleanup on unmount to prevent pointer capture issues
+  useEffect(() => {
+    return () => {
+      // Dispose OrbitControls on unmount
+      if (controlsRef.current) {
+        controlsRef.current.dispose?.()
+      }
+    }
+  }, [])
 
   return (
     <div ref={containerRef} className={`relative w-full h-full bg-gray-50 dark:bg-gray-900 overflow-hidden ${className}`}>
@@ -299,6 +338,10 @@ export default function ModelViewer({ src, poster, className, showControls = tru
         orthographic={config.ortho}
         dpr={isMobile ? [1, 1.5] : [1, 2]}
         gl={{ preserveDrawingBuffer: true, localClippingEnabled: true }}
+        style={{ touchAction: 'none' }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        onPointerMove={(e) => e.stopPropagation()}
       >
         <Suspense fallback={<Loader />}>
           {/* Model centered on X/Z axes */}
@@ -345,6 +388,7 @@ export default function ModelViewer({ src, poster, className, showControls = tru
             autoRotateSpeed={1}
             minPolarAngle={0} 
             maxPolarAngle={Math.PI / 1.75}
+            enableDamping={false}
           />
           
           <GizmoHelper alignment="bottom-left" margin={[20, 20]}>

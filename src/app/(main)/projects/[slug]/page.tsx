@@ -168,7 +168,7 @@ export default function ProjectDetailPage() {
 
   return (
     <PageContainer>
-      <div className="mb-6">
+      <div className="mb-6 relative z-50">
         <Link href="/projects">
           <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
             <ArrowLeft className="h-4 w-4 mr-2" />
