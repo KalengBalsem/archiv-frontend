@@ -110,7 +110,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/archiv-frontend.git
+   git clone https://github.com/KalengBalsem/archiv-frontend.git
    cd archiv-frontend
    ```
 
